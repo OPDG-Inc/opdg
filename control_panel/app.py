@@ -1,5 +1,6 @@
 import os
 import platform
+import git
 
 import flet as ft
 from mysql.connector import connect, Error as sql_error
@@ -9,7 +10,8 @@ from elements.tabs import tabs_config
 import elements.global_vars
 
 current_tab_index = -1
-
+current_directory = os.path.dirname(os.path.abspath(__file__))
+parent_directory = os.path.dirname(current_directory)
 
 def connect_to_db():
     try:
@@ -327,20 +329,21 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
-
+    vertext = ft.Text("", text_align=ft.TextAlign.START, size=16)
     footer = ft.Row(
         controls=[
-            ft.Text("Панель управления ботом (сборка abc123)", text_align=ft.TextAlign.START)
+            vertext
         ],
         alignment=ft.MainAxisAlignment.START
     )
 
-    print(elements.global_vars.DB_FAIL)
+    repo = git.Repo(parent_directory)
+    vertext.value = f"Панель управления ботом (сборка {repo.head.object.hexsha[:7]})"
     if elements.global_vars.DB_FAIL:
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')
     else:
-        change_screen("main")
+        change_screen("login")
     page.update()
 
 

@@ -53,7 +53,7 @@ def main(page: ft.Page):
                 ft.Container(
                     ft.Column(
                         [
-                            ft.Container(ft.Image(src="assets/images/Asset 1.png",
+                            ft.Container(ft.Image(src="assets/images/no_data.png",
                                                   fit=ft.ImageFit.CONTAIN,
                                                   height=200,
                                                   error_content=ft.ProgressRing()

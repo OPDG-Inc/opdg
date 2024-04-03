@@ -1,6 +1,6 @@
 import os
 import platform
-import git
+# import git
 
 import flet as ft
 from mysql.connector import connect, Error as sql_error
@@ -337,8 +337,9 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START
     )
 
-    repo = git.Repo(parent_directory)
-    vertext.value = f"Панель управления ботом (сборка {repo.head.object.hexsha[:7]})"
+    # repo = git.Repo(parent_directory)
+    # vertext.value = f"Панель управления ботом (сборка {repo.head.object.hexsha[:7]})"
+    vertext.value = f"Панель управления ботом (сборка developer)"
     if elements.global_vars.DB_FAIL:
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')

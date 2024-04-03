@@ -1,4 +1,5 @@
 import os
+import platform
 
 import flet as ft
 from mysql.connector import connect, Error as sql_error
@@ -13,7 +14,7 @@ current_tab_index = -1
 def connect_to_db():
     try:
         connection = connect(
-            host="185.128.107.95",
+            host=os.getenv('db_host'),
             user="developer",
             password="kLRWua&sAHT4sXB",
             database="opd"
@@ -348,7 +349,9 @@ DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
     connection, cur = connect_to_db()
-    flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
-    flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))
-    # ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets')
-    ft.app(assets_dir='assets', target=main)
+    if platform.system() == 'Windows':
+        ft.app(assets_dir='assets', target=main)
+    else:
+        flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
+        flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))
+        ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets')

@@ -137,7 +137,7 @@ def main(page: ft.Page):
                 ft.Container(
                     ft.Column(
                         [
-                            ft.Container(ft.Image(src="assets/images/no_data.png",
+                            ft.Container(ft.Image(src="no_data.png",
                                                   fit=ft.ImageFit.CONTAIN,
                                                   height=200,
                                                   error_content=ft.ProgressRing()
@@ -197,6 +197,8 @@ def main(page: ft.Page):
     #     page.update()
 
     def change_navbar_tab(e):
+        page.appbar.actions.clear()
+
         global current_tab_index
         if type(e) == int:
             tab_index = e
@@ -227,6 +229,7 @@ def main(page: ft.Page):
         page.update()
 
     def change_screen(target: str):
+        # page.appbar.actions.clear()
         page.navigation_bar = None
         page.floating_action_button = None
         page.clean()
@@ -298,7 +301,12 @@ def main(page: ft.Page):
 
     login_col = ft.Column(
         controls=[
-            ft.Icon(ft.icons.ADMIN_PANEL_SETTINGS_OUTLINED, size=150),
+            ft.Container(ft.Image(src="logo.png",
+                                  fit=ft.ImageFit.CONTAIN,
+                                  height=200,
+                                  error_content=ft.ProgressRing()
+                                  ),
+                         ),
             login_field,
             password_field,
             button_login
@@ -338,8 +346,8 @@ def main(page: ft.Page):
     )
 
     # repo = git.Repo(parent_directory)
-    # vertext.value = f"Панель управления ботом (сборка {repo.head.object.hexsha[:7]})"
-    vertext.value = f"Панель управления ботом (сборка developer)"
+    # vertext.value = f"сборка {repo.head.object.hexsha[:7]}"
+    vertext.value = f"сборка developer"
     if elements.global_vars.DB_FAIL:
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')
@@ -354,7 +362,7 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = connect_to_db()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main)
+        ft.app(assets_dir='assets', target=main, view=ft.AppView.WEB_BROWSER)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))

@@ -1,26 +1,54 @@
-import flet as ft
+import os
 
-from elements.cards import card
+import flet as ft
+from mysql.connector import connect, Error as sql_error
 from elements.screens import screens
 from elements.tabs import tabs_config
 
+import elements.global_vars
+
 current_tab_index = -1
+
+
+def connect_to_db():
+    try:
+        connection = connect(
+            host="185.128.107.95",
+            user="developer",
+            password="kLRWua&sAHT4sXB",
+            database="opd"
+        )
+        cur = connection.cursor(dictionary=True)
+        connection.autocommit = True
+        return connection, cur
+
+    except sql_error as e:
+        elements.global_vars.ERROR_TEXT = str(e)
+        elements.global_vars.DB_FAIL = True
+        return None, None
 
 
 def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START,
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.theme = ft.Theme(font_family="Montserrat")
+    page.theme_mode = ft.ThemeMode.SYSTEM
+    page.theme = ft.Theme(font_family="Montserrat",
+                          color_scheme=ft.ColorScheme(
+                              primary=ft.colors.WHITE
+                          )
+                          )
     page.fonts = {
         "Montserrat": "fonts/Montserrat-SemiBold.ttf",
-        "Geologica-Black": "fonts/Geologica-black.ttf"
+        # "Geologica-Black": "fonts/Geologica-black.ttf"
     }
+
+    page.window_width = 720
+    page.window_height = 1280
 
     def open_snackbar(text: str, bg_color=None, text_color=None):
         # Оповещение в нижней части экрана
 
-        content = ft.Text(text)
+        content = ft.Text(text, size=18)
         sb = ft.SnackBar(
             content=content
         )
@@ -36,19 +64,72 @@ def main(page: ft.Page):
         page.update()
 
     def get_from_db(request_text: str):
-        return []
+        cur.execute(request_text)
+        return cur.fetchall()
 
-    def get_cards(target: str):
-        # Генерация карточек
+    def get_topics():
+        statuses = {
+            "free": {
+                "title": "Свободна",
+                "flag": True
+            },
+            "busy": {
+                "title": "Занята",
+                "flag": False
+            },
+        }
 
-        data = get_from_db('000')
-        if data:
-            main_card = card[target]
-            for el in data:
-                # наполнение карточки
-                pass
+        rr = ft.ResponsiveRow(
+            columns=3
+        )
+
+        topics_list = get_from_db(f"SELECT * from topics")
+        if len(topics_list) > 0:
+            busy_count = 0
+            for topic in topics_list:
+                if topic['status'] == "busy":
+                    busy_count += 1
+                topic_card = ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(topic['description'], size=20, weight=ft.FontWeight.W_400),
+                                        ft.Text(
+                                            f"ID: {topic['topic_id']} | Статус: {statuses[topic['status']]['title']}",
+                                            size=20, weight=ft.FontWeight.W_400),
+                                    ],
+                                    expand=True
+                                ),
+                                ft.Row(
+                                    scroll=ft.ScrollMode.ADAPTIVE,
+                                    controls=[
+                                        ft.ElevatedButton(text="Изменить", icon=ft.icons.EDIT_ROUNDED,
+                                                          visible=statuses[topic['status']]['flag']
+                                                          ),
+                                        ft.ElevatedButton(text="Удалить", icon=ft.icons.DELETE_ROUNDED,
+                                                          visible=statuses[topic['status']]['flag']
+                                                          ),
+                                        ft.ElevatedButton(text="Перейти к группе", icon=ft.icons.FILE_OPEN_ROUNDED,
+                                                          visible=not statuses[topic['status']]['flag']),
+                                    ]
+                                )
+                            ]
+                        ),
+                        padding=15
+                    ),
+                    elevation=10,
+                    col={"lg": 1},
+                    height=180
+                )
+                rr.controls.append(topic_card)
+            page.add(rr)
+            page.appbar.actions = [
+                ft.Container(ft.Text(f"Занято {busy_count}/{len(topics_list)}", size=18),
+                             margin=ft.margin.only(right=20))]
         else:
-            # если данных по данному таргету нет
+            page.scroll = None
             page.add(
                 ft.Container(
                     ft.Column(
@@ -60,8 +141,7 @@ def main(page: ft.Page):
                                                   ),
                                          ),
                             # margin=ft.margin.only(bottom=20)),
-                            ft.Text("Данные отсутствуют", size=30, font_family="Geologica-Black",
-                                    text_align=ft.TextAlign.CENTER)
+                            title_text("Данные отсутствуют")
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -69,7 +149,49 @@ def main(page: ft.Page):
                     expand=True
                 )
             )
+
         page.update()
+
+    # def get_cards(target: str):
+    #     # Генерация карточек
+    #
+    #     data = get_from_db()
+    #     if data:
+    #         # print(data)
+    #         for el in data:
+    #             print(el)
+    #             cur_card = copy(card[target])
+    #             cur_card.content.content.controls = [
+    #                 ,
+    #                 ft.ElevatedButton("Test"),
+    #                 ft.Divider(thickness=5)
+    #             ]
+    #             page.add(cur_card)
+    #             # pass
+    #         print(len(page.controls))
+    #     else:
+    #         # если данных по данному таргету нет
+    #         page.add(
+    #             ft.Container(
+    #                 ft.Column(
+    #                     [
+    #                         ft.Container(ft.Image(src="assets/images/no_data.png",
+    #                                               fit=ft.ImageFit.CONTAIN,
+    #                                               height=200,
+    #                                               error_content=ft.ProgressRing()
+    #                                               ),
+    #                                      ),
+    #                         # margin=ft.margin.only(bottom=20)),
+    #                         ft.Text("Данные отсутствуют", size=30, font_family="Geologica-Black",
+    #                                 text_align=ft.TextAlign.CENTER)
+    #                     ],
+    #                     alignment=ft.MainAxisAlignment.CENTER,
+    #                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    #                 ),
+    #                 expand=True
+    #             )
+    #         )
+    #     page.update()
 
     def change_navbar_tab(e):
         global current_tab_index
@@ -86,7 +208,7 @@ def main(page: ft.Page):
         page.clean()
         tab = tabs_config[tab_index]
         appbar.title.value = tab['title']
-
+        page.scroll = tab['scroll']
         page.floating_action_button = None
         if tab['fab'] is not None:
             page.floating_action_button = ft.FloatingActionButton(
@@ -94,8 +216,10 @@ def main(page: ft.Page):
                 icon=tab['fab_icon'],
                 on_click=lambda _: change_screen(tab['fab_target'])
             )
-        if tab_index in [0, 1, 2]:
-            get_cards('0000')
+        if tab_index == 0:
+            get_topics()
+        # if tab_index in [0, 1, 2]:
+        #     get_cards(tabs_config[tab_index]['index'])
 
         page.update()
 
@@ -104,11 +228,12 @@ def main(page: ft.Page):
         page.floating_action_button = None
         page.clean()
 
-        appbar.title.value = screens[target]['title']
-        appbar.leading = ft.IconButton(
-            icon=screens[target]['lead_icon'],
-            on_click=lambda _: change_screen(screens[target]['target'])
-        )
+        if target in screens.keys():
+            appbar.title.value = screens[target]['title']
+            appbar.leading = ft.IconButton(
+                icon=screens[target]['lead_icon'],
+                on_click=lambda _: change_screen(screens[target]['target'])
+            )
         if target == "login":
             page.appbar = None
             page.add(ft.Container(login_col, expand=True), footer)
@@ -117,6 +242,9 @@ def main(page: ft.Page):
             page.appbar = appbar
             page.navigation_bar = navbar
             change_navbar_tab(0)
+
+        elif target == "error":
+            page.add(ft.Container(error_col, expand=True), footer)
 
         page.update()
 
@@ -131,6 +259,14 @@ def main(page: ft.Page):
         title=ft.Text(),
         bgcolor=ft.colors.SURFACE_VARIANT
     )
+
+    def copy_error_text(e: ft.ControlEvent):
+        page.set_clipboard(elements.global_vars.ERROR_TEXT)
+        open_snackbar("Текст ошибки скопирован")
+
+    def title_text(text: str):
+        return ft.Text(text, size=30, font_family="Geologica", weight=ft.FontWeight.W_900,
+                       text_align=ft.TextAlign.CENTER)
 
     navbar = ft.NavigationBar(
         destinations=[
@@ -167,6 +303,30 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
+
+    error_text = ft.Text("", size=18, text_align=ft.TextAlign.START)
+
+    error_col = ft.Column(
+        controls=[
+            ft.Card(
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            title_text("Ошибка БД"),
+                            error_text,
+                            ft.ElevatedButton(text="Скопировать текст ошибки", icon=ft.icons.COPY_ROUNDED,
+                                              on_click=copy_error_text)
+                        ]
+                    ),
+                    padding=15
+                ),
+                elevation=15
+            ),
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    )
+
     footer = ft.Row(
         controls=[
             ft.Text("Панель управления ботом (сборка abc123)", text_align=ft.TextAlign.START)
@@ -174,12 +334,21 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START
     )
 
-    change_screen("main")
+    print(elements.global_vars.DB_FAIL)
+    if elements.global_vars.DB_FAIL:
+        error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
+        change_screen('error')
+    else:
+        change_screen("main")
     page.update()
 
 
+DEFAULT_FLET_PATH = ''
+DEFAULT_FLET_PORT = 8502
+
 if __name__ == "__main__":
-    ft.app(
-        target=main,
-        assets_dir="assets"
-    )
+    connection, cur = connect_to_db()
+    flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
+    flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))
+    # ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets')
+    ft.app(assets_dir='assets', target=main)

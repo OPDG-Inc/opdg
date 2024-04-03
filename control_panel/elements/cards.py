@@ -1,8 +1,13 @@
-from flet import Card
+from flet import Card, Container, Column
 
 card = {
-    "themes": Card(
-
+    "topics": Card(
+        Container(
+            content=Column(
+            ),
+            padding=15
+        ),
+        elevation=10
     ),
     "groups": Card(
 

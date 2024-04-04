@@ -427,13 +427,8 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START
     )
 
-    current_commit = load_config_file("config.json")['last_commit']
-    new_commit = get_current_commit_hash()
-    if current_commit != new_commit:
-        button_update.visible = True
-        vertext.value = f"сборка {new_commit} (доступно обновление до {new_commit})"
-    else:
-        vertext.value = f"сборка {new_commit}"
+    vertext.value = f"сборка {get_current_commit_hash()}"
+
     if elements.global_vars.DB_FAIL:
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')

@@ -4,6 +4,8 @@ import platform
 
 import flet as ft
 from mysql.connector import connect, Error as sql_error
+
+from control_panel.functions import load_config_file
 from elements.screens import screens
 from elements.tabs import tabs_config
 
@@ -12,6 +14,7 @@ import elements.global_vars
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
+
 
 def connect_to_db():
     try:
@@ -34,7 +37,7 @@ def connect_to_db():
 def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START,
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.theme_mode = ft.ThemeMode.SYSTEM
+    page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(font_family="Montserrat",
                           color_scheme=ft.ColorScheme(
                               primary=ft.colors.WHITE
@@ -70,6 +73,56 @@ def main(page: ft.Page):
         cur.execute(request_text)
         return cur.fetchall()
 
+    def get_groups():
+        rr = ft.ResponsiveRow(columns=3)
+        groups_list = get_from_db("SELECT * FROM student_groups")
+        if len(groups_list) > 0:
+            for group in groups_list:
+                captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")[0]
+
+                participants_info = get_from_db(f"SELECT * FROM participants WHERE group_id = {group['group_id']} and status != 'captain'")
+                participants_col = ft.Column()
+                for part in participants_info:
+                    participants_col.controls.append(
+                        ft.Text(f"{part['name']} ({part['study_group']})", size=18, text_align=ft.TextAlign.START)
+                    )
+                participants_panel = ft.ExpansionPanelList(
+                    elevation=8,
+                    controls=[
+                        ft.ExpansionPanel(
+                            # bgcolor=ft.colors.BLUE_400,
+                            header=ft.ListTile(title=ft.Text(f"Список участников", size=18)),
+                            content=participants_col,
+                        )
+                    ]
+                )
+                # for part in participants_info:
+                #     participants_panel.controls.append(
+                #         ft.ExpansionPanel(
+                #             header=ft.ListTile(title=ft.Text(f"Panel AHAHA")),
+                #         )
+                #     )
+
+                group_card = ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Text(f"#{group['group_id']} | {group['name']}", size=20),
+                                ft.Text(f"Капитан: {captain_info['name']} ({captain_info['study_group']})", size=18),
+                                participants_panel
+                            ]
+                        ),
+                        padding=15
+                    ),
+                    col={"lg": 1},
+                    elevation=10
+                )
+                rr.controls.append(group_card)
+            page.add(rr)
+        else:
+            set_no_data()
+        page.update()
+
     def get_topics():
         statuses = {
             "free": {
@@ -82,11 +135,10 @@ def main(page: ft.Page):
             },
         }
 
-        rr = ft.ResponsiveRow(
-            columns=3
-        )
+        rr = ft.ResponsiveRow(columns=3)
 
         topics_list = get_from_db(f"SELECT * from topics")
+        print(len(topics_list))
         if len(topics_list) > 0:
             busy_count = 0
             for topic in topics_list:
@@ -100,7 +152,7 @@ def main(page: ft.Page):
                                     controls=[
                                         ft.Text(topic['description'], size=20, weight=ft.FontWeight.W_400),
                                         ft.Text(
-                                            f"ID: {topic['topic_id']} | Статус: {statuses[topic['status']]['title']}",
+                                            f"#{topic['topic_id']} | {statuses[topic['status']]['title']}",
                                             size=20, weight=ft.FontWeight.W_400),
                                     ],
                                     expand=True
@@ -123,80 +175,41 @@ def main(page: ft.Page):
                         padding=15
                     ),
                     elevation=10,
+                    height=200,
                     col={"lg": 1},
-                    height=180
                 )
                 rr.controls.append(topic_card)
             page.add(rr)
-            page.appbar.actions = [
-                ft.Container(ft.Text(f"Занято {busy_count}/{len(topics_list)}", size=18),
-                             margin=ft.margin.only(right=20))]
+            # page.appbar.actions = [
+            #     ft.Container(ft.Text(f"Занято {busy_count}/{len(topics_list)}", size=18),
+            #                  margin=ft.margin.only(right=20))]
         else:
-            page.scroll = None
-            page.add(
-                ft.Container(
-                    ft.Column(
-                        [
-                            ft.Container(ft.Image(src="no_data.png",
-                                                  fit=ft.ImageFit.CONTAIN,
-                                                  height=200,
-                                                  error_content=ft.ProgressRing()
-                                                  ),
-                                         ),
-                            # margin=ft.margin.only(bottom=20)),
-                            title_text("Данные отсутствуют")
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    expand=True
-                )
-            )
-
+            set_no_data()
         page.update()
 
-    # def get_cards(target: str):
-    #     # Генерация карточек
-    #
-    #     data = get_from_db()
-    #     if data:
-    #         # print(data)
-    #         for el in data:
-    #             print(el)
-    #             cur_card = copy(card[target])
-    #             cur_card.content.content.controls = [
-    #                 ,
-    #                 ft.ElevatedButton("Test"),
-    #                 ft.Divider(thickness=5)
-    #             ]
-    #             page.add(cur_card)
-    #             # pass
-    #         print(len(page.controls))
-    #     else:
-    #         # если данных по данному таргету нет
-    #         page.add(
-    #             ft.Container(
-    #                 ft.Column(
-    #                     [
-    #                         ft.Container(ft.Image(src="assets/images/no_data.png",
-    #                                               fit=ft.ImageFit.CONTAIN,
-    #                                               height=200,
-    #                                               error_content=ft.ProgressRing()
-    #                                               ),
-    #                                      ),
-    #                         # margin=ft.margin.only(bottom=20)),
-    #                         ft.Text("Данные отсутствуют", size=30, font_family="Geologica-Black",
-    #                                 text_align=ft.TextAlign.CENTER)
-    #                     ],
-    #                     alignment=ft.MainAxisAlignment.CENTER,
-    #                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    #                 ),
-    #                 expand=True
-    #             )
-    #         )
-    #     page.update()
+    def set_no_data():
+        page.scroll = None
+        page.add(
+            ft.Container(
+                ft.Column(
+                    [
+                        ft.Container(ft.Image(src="no_data.png",
+                                              fit=ft.ImageFit.CONTAIN,
+                                              height=200,
+                                              error_content=ft.ProgressRing()
+                                              ),
+                                     ),
+                        title_text("Данные отсутствуют")
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                expand=True
+            )
+        )
 
     def change_navbar_tab(e):
+        page.clean()
         page.appbar.actions.clear()
 
         global current_tab_index
@@ -205,27 +218,22 @@ def main(page: ft.Page):
         else:
             tab_index = e.control.selected_index
 
-        # if tab_index == current_tab_index:
-        #     return
-        # else:
-        #     current_tab_index = tab_index
-
-        page.clean()
         tab = tabs_config[tab_index]
         appbar.title.value = tab['title']
         page.scroll = tab['scroll']
         page.floating_action_button = None
+
         if tab['fab'] is not None:
             page.floating_action_button = ft.FloatingActionButton(
                 text=tab['fab_text'],
                 icon=tab['fab_icon'],
                 on_click=lambda _: change_screen(tab['fab_target'])
             )
+
         if tab_index == 0:
             get_topics()
-        # if tab_index in [0, 1, 2]:
-        #     get_cards(tabs_config[tab_index]['index'])
-
+        elif tab_index == 1:
+            get_groups()
         page.update()
 
     def change_screen(target: str):
@@ -274,6 +282,17 @@ def main(page: ft.Page):
         return ft.Text(text, size=30, font_family="Geologica", weight=ft.FontWeight.W_900,
                        text_align=ft.TextAlign.CENTER)
 
+    def login():
+        print(login_field.value.strip(), password_field.value.strip())
+        auth_data = load_config_file("config.json")['auth']
+        print(auth_data['login'], auth_data['password'])
+        if login_field.value.strip() == auth_data['login'] and password_field.value.strip() == auth_data['password']:
+            password_field.value = ""
+            open_snackbar("С возвращением!", bg_color=ft.colors.GREEN, text_color=ft.colors.WHITE)
+            change_screen("main")
+        else:
+            open_snackbar("Неверный логин или пароль", bg_color=ft.colors.RED, text_color=ft.colors.WHITE)
+
     navbar = ft.NavigationBar(
         destinations=[
             ft.NavigationDestination(icon=ft.icons.FORMAT_LIST_BULLETED_ROUNDED, label=tabs_config[0]['title']),
@@ -292,9 +311,9 @@ def main(page: ft.Page):
     password_field = ft.TextField(
         label="Пароль", text_align=ft.TextAlign.LEFT,
         width=250, password=True, on_change=validate_login,
-        can_reveal_password=True, height=70, on_submit=lambda _: change_screen("main"),
+        can_reveal_password=True, height=70, on_submit=lambda _: login(),
     )
-    button_login = ft.ElevatedButton("Войти", width=250, on_click=lambda _: change_screen("main"),
+    button_login = ft.ElevatedButton("Войти", width=250, on_click=lambda _: login(),
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
@@ -309,7 +328,8 @@ def main(page: ft.Page):
                          ),
             login_field,
             password_field,
-            button_login
+            button_login,
+            ft.Text("login: admin | password: admin")
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -362,7 +382,7 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = connect_to_db()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main, view=ft.AppView.WEB_BROWSER)
+        ft.app(assets_dir='assets', target=main)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))

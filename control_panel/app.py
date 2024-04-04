@@ -334,8 +334,8 @@ def main(page: ft.Page):
         try:
             result = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
             return result.stdout.decode('utf-8').strip()[:7]
-        except:
-            return None
+        except Exception as e:
+            return e
 
     loading_dialog = ft.AlertDialog(
         modal=True,

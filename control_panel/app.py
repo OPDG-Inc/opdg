@@ -428,6 +428,7 @@ def main(page: ft.Page):
         change_screen('error')
     else:
         change_screen("login")
+    close_dialog(loading_dialog)
     page.update()
 
 

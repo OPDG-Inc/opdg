@@ -434,6 +434,7 @@ def main(page: ft.Page):
     else:
         change_screen("login")
     page.dialog = None
+    close_dialog(loading_dialog)
     page.update()
 
 

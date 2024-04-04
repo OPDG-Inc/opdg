@@ -376,8 +376,7 @@ def main(page: ft.Page):
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
-    button_update = ft.OutlinedButton("Обновить проект", width=250, on_click=lambda _: update(), height=50,
-                                      visible=False)
+    button_update = ft.OutlinedButton("Обновить проект", width=250, on_click=lambda _: update(), height=50)
 
     login_col = ft.Column(
         controls=[

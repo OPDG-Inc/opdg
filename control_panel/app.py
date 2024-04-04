@@ -5,7 +5,7 @@ import platform
 import flet as ft
 from mysql.connector import connect, Error as sql_error
 
-from control_panel.functions import load_config_file
+from functions import load_config_file
 from elements.screens import screens
 from elements.tabs import tabs_config
 

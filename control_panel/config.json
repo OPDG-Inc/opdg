@@ -2,5 +2,6 @@
   "auth": {
     "login": "admin",
     "password": "admin"
-  }
+  },
+  "last_commit": "5b14a8e"
 }

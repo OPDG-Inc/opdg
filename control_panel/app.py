@@ -1,8 +1,7 @@
 import os
 import platform
+import subprocess
 import time
-
-# import git
 
 import flet as ft
 from mysql.connector import connect, Error as sql_error
@@ -331,6 +330,13 @@ def main(page: ft.Page):
         dialog.open = False
         page.update()
 
+    def get_current_commit_hash():
+        try:
+            result = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+            return result.stdout.decode('utf-8').strip()[:7]
+        except:
+            return None
+
     loading_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text(),
@@ -370,7 +376,8 @@ def main(page: ft.Page):
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
-    button_update = ft.OutlinedButton("git pull&restart", width=250, on_click=lambda _: update(), height=50)
+    button_update = ft.OutlinedButton("Обновить проект", width=250, on_click=lambda _: update(), height=50,
+                                      visible=False)
 
     login_col = ft.Column(
         controls=[
@@ -420,9 +427,13 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START
     )
 
-    # repo = git.Repo(parent_directory)
-    # vertext.value = f"сборка {repo.head.object.hexsha[:7]}"
-    vertext.value = f"сборка developer"
+    current_commit = load_config_file("config.json")['last_commit']
+    new_commit = get_current_commit_hash()
+    if current_commit != new_commit:
+        button_update.visible = True
+        vertext.value = f"сборка {new_commit} (доступно обновление до {new_commit})"
+    else:
+        vertext.value = f"сборка {new_commit}"
     if elements.global_vars.DB_FAIL:
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')

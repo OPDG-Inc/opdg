@@ -1,5 +1,7 @@
 import os
 import platform
+import time
+
 # import git
 
 import flet as ft
@@ -10,13 +12,14 @@ from elements.screens import screens
 from elements.tabs import tabs_config
 
 import elements.global_vars
+from db.tables import Topic, StudentGroup, Participant, Jury
 
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 
 
-def connect_to_db():
+def create_db_connection():
     try:
         connection = connect(
             host=os.getenv('db_host'),
@@ -38,25 +41,28 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START,
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
-    page.theme = ft.Theme(font_family="Montserrat",
-                          color_scheme=ft.ColorScheme(
-                              primary=ft.colors.WHITE
-                          )
-                          )
+    page.theme = ft.Theme(
+        font_family="Montserrat",
+        color_scheme=ft.ColorScheme(
+            primary=ft.colors.WHITE
+        )
+    )
+
     page.fonts = {
         "Montserrat": "fonts/Montserrat-SemiBold.ttf",
         # "Geologica-Black": "fonts/Geologica-black.ttf"
     }
 
-    page.window_width = 720
-    page.window_height = 1280
+    # page.window_width = 720
+    # page.window_height = 1280
 
     def open_snackbar(text: str, bg_color=None, text_color=None):
         # Оповещение в нижней части экрана
 
         content = ft.Text(text, size=18)
         sb = ft.SnackBar(
-            content=content
+            content=content,
+            duration=500
         )
 
         if bg_color is not None:
@@ -69,46 +75,53 @@ def main(page: ft.Page):
         sb.open = True
         page.update()
 
-    def get_from_db(request_text: str):
+    def get_from_db(request_text: str, many=False):
         cur.execute(request_text)
-        return cur.fetchall()
+        if many:
+            return cur.fetchall()
+        else:
+            return cur.fetchone()
 
     def get_groups():
         rr = ft.ResponsiveRow(columns=3)
-        groups_list = get_from_db("SELECT * FROM student_groups")
+        groups_list = get_from_db("SELECT * FROM student_groups", many=True)
         if len(groups_list) > 0:
             for group in groups_list:
-                captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")[0]
 
-                participants_info = get_from_db(f"SELECT * FROM participants WHERE group_id = {group['group_id']} and status != 'captain'")
-                participants_col = ft.Column()
-                for part in participants_info:
-                    participants_col.controls.append(
-                        ft.Text(f"{part['name']} ({part['study_group']})", size=18, text_align=ft.TextAlign.START)
-                    )
-                participants_panel = ft.ExpansionPanelList(
-                    elevation=8,
-                    controls=[
-                        ft.ExpansionPanel(
-                            # bgcolor=ft.colors.BLUE_400,
-                            header=ft.ListTile(title=ft.Text(f"Список участников", size=18)),
-                            content=participants_col,
-                        )
-                    ]
+                # информация о теме
+                topic_info = get_from_db(f"SELECT * FROM topics WHERE topic_id = {group['topic_id']}")
+                current_topic = Topic(topic_info['topic_id'], topic_info['description'], topic_info['status'])
+
+                # информация о капитане
+                captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")
+                cur_captain = Participant(captain_info['participant_id'], captain_info['group_id'],
+                                          captain_info['name'], captain_info['study_group'], captain_info['status'])
+
+                # информация об участнике
+                participants_info = get_from_db(
+                    f"SELECT * FROM participants WHERE group_id = {group['group_id']} and status != 'captain'",
+                    many=True)
+
+                # заполняем список участников
+                participants_panel = ft.ExpansionTile(
+                    title=ft.Text("Список группы", size=18),
+                    affinity=ft.TileAffinity.LEADING,
                 )
-                # for part in participants_info:
-                #     participants_panel.controls.append(
-                #         ft.ExpansionPanel(
-                #             header=ft.ListTile(title=ft.Text(f"Panel AHAHA")),
-                #         )
-                #     )
+                for part in participants_info:
+                    cur_part = Participant(part['participant_id'], part['group_id'], part['name'], part['study_group'],
+                                           part['status'])
+                    participants_panel.controls.append(
+                        ft.ListTile(title=ft.Text(f"{cur_part.name} ({cur_part.study_group})", size=18,
+                                                  text_align=ft.TextAlign.START))
+                    )
 
                 group_card = ft.Card(
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Text(f"#{group['group_id']} | {group['name']}", size=20),
-                                ft.Text(f"Капитан: {captain_info['name']} ({captain_info['study_group']})", size=18),
+                                ft.Text(f"{group['name']}", size=20, weight=ft.FontWeight.W_800),
+                                ft.Text(f"Капитан: {cur_captain.name} ({cur_captain.study_group})", size=18),
+                                ft.Text(f"Тема: #{current_topic.topic_id} {current_topic.description}", size=18),
                                 participants_panel
                             ]
                         ),
@@ -137,7 +150,7 @@ def main(page: ft.Page):
 
         rr = ft.ResponsiveRow(columns=3)
 
-        topics_list = get_from_db(f"SELECT * from topics")
+        topics_list = get_from_db(f"SELECT * from topics", many=True)
         print(len(topics_list))
         if len(topics_list) > 0:
             busy_count = 0
@@ -166,7 +179,7 @@ def main(page: ft.Page):
                                         ft.ElevatedButton(text="Удалить", icon=ft.icons.DELETE_ROUNDED,
                                                           visible=statuses[topic['status']]['flag']
                                                           ),
-                                        ft.ElevatedButton(text="Перейти к группе", icon=ft.icons.FILE_OPEN_ROUNDED,
+                                        ft.ElevatedButton(text="Информация о группе", icon=ft.icons.FILE_OPEN_ROUNDED,
                                                           visible=not statuses[topic['status']]['flag']),
                                     ]
                                 )
@@ -209,19 +222,24 @@ def main(page: ft.Page):
         )
 
     def change_navbar_tab(e):
-        page.clean()
-        page.appbar.actions.clear()
-
         global current_tab_index
         if type(e) == int:
             tab_index = e
         else:
             tab_index = e.control.selected_index
 
+        page.clean()
+        page.appbar.actions.clear()
+
         tab = tabs_config[tab_index]
         appbar.title.value = tab['title']
         page.scroll = tab['scroll']
         page.floating_action_button = None
+
+        if tab_index in [0, 1, 2]:
+            open_dialog(loading_dialog)
+            time.sleep(1)
+            pass
 
         if tab['fab'] is not None:
             page.floating_action_button = ft.FloatingActionButton(
@@ -234,6 +252,9 @@ def main(page: ft.Page):
             get_topics()
         elif tab_index == 1:
             get_groups()
+
+        close_dialog(loading_dialog)
+
         page.update()
 
     def change_screen(target: str):
@@ -249,6 +270,7 @@ def main(page: ft.Page):
                 on_click=lambda _: change_screen(screens[target]['target'])
             )
         if target == "login":
+            page.scroll = None
             page.appbar = None
             page.add(ft.Container(login_col, expand=True), footer)
 
@@ -292,6 +314,30 @@ def main(page: ft.Page):
             change_screen("main")
         else:
             open_snackbar("Неверный логин или пароль", bg_color=ft.colors.RED, text_color=ft.colors.WHITE)
+
+    def open_dialog(dialog: ft.AlertDialog):
+        page.dialog = dialog
+        dialog.open = True
+        page.update()
+
+    def close_dialog(dialog: ft.AlertDialog):
+        dialog.open = False
+        page.update()
+
+    loading_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text(),
+        content=ft.Column(
+            width=100,
+            height=100,
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.ProgressRing(scale=1.5),
+                ft.Container(ft.Text("Загружаем", size=20), margin=ft.margin.only(top=20))
+            ]
+        )
+    )
 
     navbar = ft.NavigationBar(
         destinations=[
@@ -372,7 +418,7 @@ def main(page: ft.Page):
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')
     else:
-        change_screen("login")
+        change_screen("main")
     page.update()
 
 
@@ -380,7 +426,7 @@ DEFAULT_FLET_PATH = ''
 DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
-    connection, cur = connect_to_db()
+    connection, cur = create_db_connection()
     if platform.system() == 'Windows':
         ft.app(assets_dir='assets', target=main)
     else:

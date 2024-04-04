@@ -62,7 +62,7 @@ def main(page: ft.Page):
         content = ft.Text(text, size=18)
         sb = ft.SnackBar(
             content=content,
-            duration=500
+            duration=1000
         )
 
         if bg_color is not None:
@@ -304,6 +304,13 @@ def main(page: ft.Page):
         return ft.Text(text, size=30, font_family="Geologica", weight=ft.FontWeight.W_900,
                        text_align=ft.TextAlign.CENTER)
 
+    def update():
+        if platform.system() == 'Windows':
+            open_snackbar("Действие недоступно")
+        else:
+            open_dialog(loading_dialog)
+            os.system("/root/controlupdate.sh")
+
     def login():
         print(login_field.value.strip(), password_field.value.strip())
         auth_data = load_config_file("config.json")['auth']
@@ -363,6 +370,7 @@ def main(page: ft.Page):
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
+    button_update = ft.OutlinedButton("git pull&restart", width=250, on_click=lambda _: update(), height=50)
 
     login_col = ft.Column(
         controls=[
@@ -375,6 +383,7 @@ def main(page: ft.Page):
             login_field,
             password_field,
             button_login,
+            button_update,
             ft.Text("login: admin | password: admin")
         ],
         alignment=ft.MainAxisAlignment.CENTER,
@@ -418,7 +427,7 @@ def main(page: ft.Page):
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')
     else:
-        change_screen("main")
+        change_screen("login")
     page.update()
 
 

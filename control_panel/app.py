@@ -49,6 +49,7 @@ def main(page: ft.Page):
 
     page.fonts = {
         "Montserrat": "fonts/Montserrat-SemiBold.ttf",
+        "Geologica": "fonts/Geologica.ttf",
         # "Geologica-Black": "fonts/Geologica-black.ttf"
     }
 

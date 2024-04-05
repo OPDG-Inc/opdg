@@ -361,7 +361,7 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
-            change_navbar_tab(2)
+            change_navbar_tab(0)
 
         elif target == "error":
             page.add(ft.Container(error_col, expand=True), footer)
@@ -524,7 +524,7 @@ def main(page: ft.Page):
         error_text.value = labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT)
         change_screen('error')
     else:
-        change_screen("main")
+        change_screen("login")
     page.update()
 
 

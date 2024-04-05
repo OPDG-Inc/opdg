@@ -11,7 +11,6 @@ from elements.screens import screens
 from elements.tabs import tabs_config
 
 import elements.global_vars
-from db.tables import Topic, StudentGroup, Participant, Jury
 
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -89,12 +88,9 @@ def main(page: ft.Page):
 
                 # информация о теме
                 topic_info = get_from_db(f"SELECT * FROM topics WHERE topic_id = {group['topic_id']}")
-                current_topic = Topic(topic_info['topic_id'], topic_info['description'], topic_info['status'])
 
                 # информация о капитане
                 captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")
-                cur_captain = Participant(captain_info['participant_id'], captain_info['group_id'],
-                                          captain_info['name'], captain_info['study_group'], captain_info['status'])
 
                 # информация об участнике
                 participants_info = get_from_db(
@@ -107,10 +103,8 @@ def main(page: ft.Page):
                     affinity=ft.TileAffinity.LEADING,
                 )
                 for part in participants_info:
-                    cur_part = Participant(part['participant_id'], part['group_id'], part['name'], part['study_group'],
-                                           part['status'])
                     participants_panel.controls.append(
-                        ft.ListTile(title=ft.Text(f"{cur_part.name} ({cur_part.study_group})", size=18,
+                        ft.ListTile(title=ft.Text(f"{part['name']} ({part['study_group']})", size=18,
                                                   text_align=ft.TextAlign.START))
                     )
 
@@ -121,8 +115,8 @@ def main(page: ft.Page):
                                 ft.Text(f"{group['name']}", size=20, weight=ft.FontWeight.W_800),
                                 ft.Text(f"Оценки: []\nNone место", size=20, weight=ft.FontWeight.W_800),
                                 ft.Divider(thickness=2),
-                                ft.Text(f"Капитан: {cur_captain.name} ({cur_captain.study_group})", size=18),
-                                ft.Text(f"Тема: #{current_topic.topic_id} {current_topic.description}", size=18),
+                                ft.Text(f"Капитан: {captain_info['name']} ({captain_info['study_group']})", size=18),
+                                ft.Text(f"Тема: #{topic_info['topic_id']} {topic_info['description']}", size=18),
                                 participants_panel
                             ]
                         ),
@@ -219,7 +213,67 @@ def main(page: ft.Page):
         page.update()
 
     def get_jury():
-        pass
+        statuses = {
+            "waiting": {
+                "title": "Ожидание регистрации",
+                "flag": True,
+                "icon": ft.Icon(ft.icons.ACCESS_TIME_ROUNDED, color=ft.colors.AMBER)
+            },
+            "registered": {
+                "title": "Зарегистрирован",
+                "flag": False,
+                "icon": ft.Icon(ft.icons.CHECK_CIRCLE_OUTLINE_OUTLINED, color=ft.colors.GREEN)
+            },
+        }
+        rr = ft.ResponsiveRow(columns=3)
+        jury_list = get_from_db("SELECT * FROM jury", many=True)
+        if len(jury_list) > 0:
+            for jury in jury_list:
+                jury_card = ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Column(
+                                    controls=[
+                                        ft.Row([
+                                            ft.Icon(ft.icons.ACCOUNT_CIRCLE_ROUNDED),
+                                            ft.Text(jury['name'], size=20, weight=ft.FontWeight.W_400)
+                                        ]),
+                                        ft.Row([
+                                            statuses[jury['status']]['icon'],
+                                            ft.Text(f"{statuses[jury['status']]['title']}", size=20, weight=ft.FontWeight.W_400)
+                                        ])
+                                    ],
+                                    expand=True
+                                ),
+                                ft.Row(
+                                    scroll=ft.ScrollMode.ADAPTIVE,
+                                    controls=[
+                                        ft.ElevatedButton(
+                                            text="Удалить",
+                                            icon=ft.icons.DELETE_ROUNDED,
+                                            on_click=None
+                                        ),
+                                        ft.ElevatedButton(
+                                            text="Ссылка", icon=ft.icons.LINK_ROUNDED,
+                                            visible=statuses[jury['status']]['flag'],
+                                            data=jury['pass_phrase'],
+                                            on_click=get_jury_link
+                                        )
+                                    ]
+                                )
+                            ]
+                        ),
+                        padding=15
+                    ),
+                    elevation=10,
+                    height=200,
+                    col={"lg": 1}
+                )
+                rr.controls.append(jury_card)
+            page.add(rr)
+        else:
+            set_no_data()
 
     def set_no_data():
         page.scroll = None
@@ -241,6 +295,10 @@ def main(page: ft.Page):
                 expand=True
             )
         )
+
+    def get_jury_link(e: ft.ControlEvent):
+        page.set_clipboard(f"https://t.me/bot_name?start=newjury_{e.control.data}")
+        open_snackbar("Пригласительная ссылка скопирована")
 
     def change_navbar_tab(e):
         global current_tab_index
@@ -273,6 +331,8 @@ def main(page: ft.Page):
             get_topics()
         elif tab_index == 1:
             get_groups()
+        elif tab_index == 2:
+            get_jury()
 
         close_dialog(loading_dialog)
 
@@ -454,9 +514,9 @@ def main(page: ft.Page):
         error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
         change_screen('error')
     else:
-        change_screen("login")
-    page.dialog = None
-    close_dialog(loading_dialog)
+        change_screen("main")
+    # page.dialog = None
+    # close_dialog(loading_dialog)
     page.update()
 
 
@@ -466,8 +526,8 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = create_db_connection()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main)
+        ft.app(assets_dir='assets', target=main, use_color_emoji=True, view=ft.AppView.WEB_BROWSER)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))
-        ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets')
+        ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets', use_color_emoji=True)

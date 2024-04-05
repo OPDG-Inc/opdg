@@ -129,21 +129,24 @@ def main(page: ft.Page):
                                     margin=ft.margin.only(top=-20),
                                     visible=not statuses[group['video_status']]['flag']
                                 ),
-                                ft.Row(
+                                ft.ResponsiveRow(
                                     [
                                         ft.ElevatedButton(
                                             text="Участники",
                                             icon=ft.icons.GROUPS_ROUNDED,
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                            col={"lg": 1}
                                         ),
                                         ft.ElevatedButton(
                                             text=statuses[group['video_status']]['title'],
                                             icon=ft.icons.ONDEMAND_VIDEO_ROUNDED,
                                             disabled=statuses[group['video_status']]['flag'],
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                            col={"lg": 1}
                                         ),
 
                                     ],
+                                    columns=2,
                                     alignment=ft.MainAxisAlignment.END,
                                     # scroll=ft.ScrollMode.HIDDEN,
                                 ),
@@ -381,7 +384,7 @@ def main(page: ft.Page):
         if target == "login":
             page.scroll = None
             page.appbar = None
-            page.add(ft.Container(login_col, expand=True), footer)
+            page.add(ft.Container(login_col, expand=True), )#footer)
 
         elif target == "main":
             page.appbar = appbar
@@ -389,7 +392,7 @@ def main(page: ft.Page):
             change_navbar_tab(0)
 
         elif target == "error":
-            page.add(ft.Container(error_col, expand=True), footer)
+            page.add(ft.Container(error_col, expand=True), )#footer)
 
         page.update()
 
@@ -500,7 +503,7 @@ def main(page: ft.Page):
             password_field,
             button_login,
             button_update,
-            ft.Text("login: admin | password: admin")
+            # ft.Text("login: admin | password: admin")
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER

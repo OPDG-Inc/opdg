@@ -40,7 +40,7 @@ labels = {
         'topic_busy': "Занята",
         'jury_waiting': "Ожидание регистрации",
         'jury_registered': "Зарегистрирован",
-        'video_waiting': "Видео не загружено",
+        'video_waiting': "Открыть видео",
         'video_uploaded': "Открыть видео"
     }
 }

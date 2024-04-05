@@ -6,12 +6,13 @@ class Topic:
 
 
 class StudentGroup:
-    def __int__(self, group_id=None, name=None, topic_id=None, captain_id=None, video_status=None):
+    def __int__(self, group_id=None, name=None, topic_id=None, captain_id=None, video_status=None, final_mark=None):
         self.group_id = group_id
         self.name = name
         self.topic_id = topic_id
         self.captain_id = captain_id
         self.video_status = video_status
+        self.final_mark = final_mark
 
 
 class Participant:

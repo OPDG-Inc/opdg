@@ -119,6 +119,8 @@ def main(page: ft.Page):
                         content=ft.Column(
                             controls=[
                                 ft.Text(f"{group['name']}", size=20, weight=ft.FontWeight.W_800),
+                                ft.Text(f"Оценки: []\nNone место", size=20, weight=ft.FontWeight.W_800),
+                                ft.Divider(thickness=2),
                                 ft.Text(f"Капитан: {cur_captain.name} ({cur_captain.study_group})", size=18),
                                 ft.Text(f"Тема: #{current_topic.topic_id} {current_topic.description}", size=18),
                                 participants_panel
@@ -191,6 +193,23 @@ def main(page: ft.Page):
                     col={"lg": 1},
                 )
                 rr.controls.append(topic_card)
+            rr.controls.append(
+                ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                            controls=[
+                                ft.TextButton(icon=ft.icons.ADD, text="Добавить новую тему", on_click=None, scale=1.25)
+                            ]
+                        ),
+                        padding=75
+                    ),
+                    elevation=0,
+                    height=200,
+                    col={"lg": 1}
+                )
+            )
             page.add(rr)
             # page.appbar.actions = [
             #     ft.Container(ft.Text(f"Занято {busy_count}/{len(topics_list)}", size=18),
@@ -198,6 +217,9 @@ def main(page: ft.Page):
         else:
             set_no_data()
         page.update()
+
+    def get_jury():
+        pass
 
     def set_no_data():
         page.scroll = None

@@ -82,17 +82,25 @@ def main(page: ft.Page):
             return cur.fetchone()
 
     def get_groups():
-        rr = ft.ResponsiveRow(columns=3)
+        statuses = {
+            'waiting': {
+                'title': labels['statuses']['video_waiting'],
+                'flag': True
+            },
+            'uploaded': {
+                'title': labels['statuses']['video_uploaded'],
+                'flag': False
+            }
+        }
+        rr = ft.ResponsiveRow(columns=4)
         groups_list = get_from_db("SELECT * FROM student_groups", many=True)
         if len(groups_list) > 0:
             for group in groups_list:
 
                 topic_info = get_from_db(f"SELECT * FROM topics WHERE topic_id = {group['topic_id']}")
 
-                captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")
-
                 participants_info = get_from_db(
-                    f"SELECT * FROM participants WHERE group_id = {group['group_id']} and status != 'captain'",
+                    f"SELECT * FROM participants WHERE group_id = {group['group_id']}",
                     many=True)
 
                 participants_panel = ft.ExpansionTile(
@@ -109,13 +117,38 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Text(f"{group['name']}", size=20, weight=ft.FontWeight.W_800),
-                                ft.Text(f"Оценки: []\nNone место", size=20, weight=ft.FontWeight.W_800),
-                                ft.Divider(thickness=2),
-                                ft.Text(f"Капитан: {captain_info['name']} ({captain_info['study_group']})", size=18),
-                                ft.Text(f"Тема: #{topic_info['topic_id']} {topic_info['description']}", size=18),
-                                participants_panel
-                            ]
+                                ft.ListTile(
+                                    title=ft.Text(f"{group['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    subtitle=ft.Text(f"#{topic_info['topic_id']} {topic_info['description']}", size=18),
+                                ),
+                                ft.Container(
+                                    ft.ListTile(
+                                        title=ft.Text("Оценки", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                        subtitle=ft.Text(f"не выставлены", size=18),
+                                    ),
+                                    margin=ft.margin.only(top=-20),
+                                    visible=not statuses[group['video_status']]['flag']
+                                ),
+                                ft.Row(
+                                    [
+                                        ft.ElevatedButton(
+                                            text="Участники",
+                                            icon=ft.icons.GROUPS_ROUNDED,
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                        ),
+                                        ft.ElevatedButton(
+                                            text=statuses[group['video_status']]['title'],
+                                            icon=ft.icons.ONDEMAND_VIDEO_ROUNDED,
+                                            disabled=statuses[group['video_status']]['flag'],
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                        ),
+
+                                    ],
+                                    alignment=ft.MainAxisAlignment.END,
+                                    # scroll=ft.ScrollMode.HIDDEN,
+                                ),
+                            ],
+                            # horizontal_alignment=ft.CrossAxisAlignment.CENTER
                         ),
                         padding=15
                     ),
@@ -132,10 +165,12 @@ def main(page: ft.Page):
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],
+                'icon': ft.Icon(ft.icons.MESSAGE_ROUNDED, color=ft.colors.GREEN),
                 "flag": True
             },
             "busy": {
                 "title": labels['statuses']['topic_busy'],
+                'icon': ft.Icon(ft.icons.GROUPS_ROUNDED, color=ft.colors.AMBER),
                 "flag": False
             },
         }
@@ -153,17 +188,28 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Column(
-                                    controls=[
-                                        ft.Text(topic['description'], size=20, weight=ft.FontWeight.W_400),
-                                        ft.Text(
-                                            f"#{topic['topic_id']} | {statuses[topic['status']]['title']}",
-                                            size=20, weight=ft.FontWeight.W_400),
-                                    ],
+                                ft.ListTile(
+                                    title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    subtitle=ft.Row(
+                                            [
+                                                statuses[topic['status']]['icon'],
+                                                ft.Text(statuses[topic['status']]['title'], size=20)
+                                            ]
+                                        ),
                                     expand=True
                                 ),
+                                # ft.Column(
+                                #     controls=[
+                                #         ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, weight=ft.FontWeight.W_400),
+                                #         ft.Row(
+                                #             [
+                                #                 statuses[topic['status']]['icon'],
+                                #                 ft.Text(statuses[topic['status']]['title'], size=20)
+                                #             ]
+                                #         ),
+                                #     ],
+                                # ),
                                 ft.Row(
-                                    scroll=ft.ScrollMode.ADAPTIVE,
                                     controls=[
                                         ft.ElevatedButton(
                                             text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
@@ -180,7 +226,8 @@ def main(page: ft.Page):
                                             visible=not statuses[topic['status']]['flag'],
                                             bgcolor=ft.colors.PRIMARY_CONTAINER
                                         ),
-                                    ]
+                                    ],
+                                    alignment=ft.MainAxisAlignment.END
                                 )
                             ]
                         ),
@@ -191,27 +238,7 @@ def main(page: ft.Page):
                     col={"lg": 1},
                 )
                 rr.controls.append(topic_card)
-            rr.controls.append(
-                ft.Card(
-                    ft.Container(
-                        content=ft.Column(
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.TextButton(icon=ft.icons.ADD, text=labels['elements']['add_topic_btn'], on_click=None, scale=1.25)
-                            ]
-                        ),
-                        padding=75
-                    ),
-                    elevation=0,
-                    height=200,
-                    col={"lg": 1}
-                )
-            )
             page.add(rr)
-            # page.appbar.actions = [
-            #     ft.Container(ft.Text(f"Занято {busy_count}/{len(topics_list)}", size=18),
-            #                  margin=ft.margin.only(right=20))]
         else:
             set_no_data()
         page.update()
@@ -229,7 +256,7 @@ def main(page: ft.Page):
                 "icon": ft.Icon(ft.icons.CHECK_CIRCLE_OUTLINE_OUTLINED, color=ft.colors.GREEN)
             },
         }
-        rr = ft.ResponsiveRow(columns=3)
+        rr = ft.ResponsiveRow(columns=4)
         jury_list = get_from_db("SELECT * FROM jury", many=True)
         if len(jury_list) > 0:
             for jury in jury_list:
@@ -237,18 +264,15 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Column(
-                                    controls=[
-                                        ft.Text(jury['name'], size=20, weight=ft.FontWeight.W_400),
-                                        ft.Row([
+                                ft.ListTile(
+                                    title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    subtitle=ft.Row([
                                             statuses[jury['status']]['icon'],
-                                            ft.Text(f"{statuses[jury['status']]['title']}", size=20, weight=ft.FontWeight.W_400)
+                                            ft.Text(f"{statuses[jury['status']]['title']}", size=18, weight=ft.FontWeight.W_400)
                                         ])
-                                    ],
-                                    expand=True
                                 ),
                                 ft.Row(
-                                    scroll=ft.ScrollMode.ADAPTIVE,
+                                    # scroll=ft.ScrollMode.ADAPTIVE,
                                     controls=[
                                         ft.ElevatedButton(
                                             text=labels['buttons']['delete'],
@@ -263,14 +287,15 @@ def main(page: ft.Page):
                                             bgcolor=ft.colors.PRIMARY_CONTAINER,
                                             on_click=get_jury_link
                                         )
-                                    ]
+                                    ],
+                                    alignment=ft.MainAxisAlignment.END
                                 )
                             ]
                         ),
                         padding=15
                     ),
                     elevation=10,
-                    height=200,
+                    # height=200,
                     col={"lg": 1}
                 )
                 rr.controls.append(jury_card)
@@ -534,7 +559,7 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = create_db_connection()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main, use_color_emoji=True)
+        ft.app(assets_dir='assets', target=main, use_color_emoji=True, name='', port=8502)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))

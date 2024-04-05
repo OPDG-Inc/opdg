@@ -20,7 +20,8 @@ labels = {
         'group_info': "Информация о группе",
         'login': "Войти",
         'update_project': "Обновить проект",
-        'copy_error_text': "Скопировать текст ошибки"
+        'copy_error_text': "Скопировать текст ошибки",
+        'video_link': "Открыть видео"
     },
     'fields': {
         'login': "Логин",
@@ -39,5 +40,7 @@ labels = {
         'topic_busy': "Занята",
         'jury_waiting': "Ожидание регистрации",
         'jury_registered': "Зарегистрирован",
+        'video_waiting': "Видео не загружено",
+        'video_uploaded': "Открыть видео"
     }
 }

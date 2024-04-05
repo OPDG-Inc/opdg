@@ -11,6 +11,7 @@ from elements.screens import screens
 from elements.tabs import tabs_config
 
 import elements.global_vars
+from elements.text import labels
 
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +41,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
-        font_family="Montserrat",
+        # font_family="Geologica",
         color_scheme=ft.ColorScheme(
             primary=ft.colors.WHITE
         )
@@ -86,20 +87,16 @@ def main(page: ft.Page):
         if len(groups_list) > 0:
             for group in groups_list:
 
-                # информация о теме
                 topic_info = get_from_db(f"SELECT * FROM topics WHERE topic_id = {group['topic_id']}")
 
-                # информация о капитане
                 captain_info = get_from_db(f"SELECT * FROM participants WHERE participant_id = {group['captain_id']}")
 
-                # информация об участнике
                 participants_info = get_from_db(
                     f"SELECT * FROM participants WHERE group_id = {group['group_id']} and status != 'captain'",
                     many=True)
 
-                # заполняем список участников
                 participants_panel = ft.ExpansionTile(
-                    title=ft.Text("Список группы", size=18),
+                    title=ft.Text(labels['elements']['participants_panel_title'], size=18),
                     affinity=ft.TileAffinity.LEADING,
                 )
                 for part in participants_info:
@@ -134,11 +131,11 @@ def main(page: ft.Page):
     def get_topics():
         statuses = {
             "free": {
-                "title": "Свободна",
+                "title": labels['statuses']['topic_free'],
                 "flag": True
             },
             "busy": {
-                "title": "Занята",
+                "title": labels['statuses']['topic_busy'],
                 "flag": False
             },
         }
@@ -168,14 +165,21 @@ def main(page: ft.Page):
                                 ft.Row(
                                     scroll=ft.ScrollMode.ADAPTIVE,
                                     controls=[
-                                        ft.ElevatedButton(text="Изменить", icon=ft.icons.EDIT_ROUNDED,
-                                                          visible=statuses[topic['status']]['flag']
-                                                          ),
-                                        ft.ElevatedButton(text="Удалить", icon=ft.icons.DELETE_ROUNDED,
-                                                          visible=statuses[topic['status']]['flag']
-                                                          ),
-                                        ft.ElevatedButton(text="Информация о группе", icon=ft.icons.FILE_OPEN_ROUNDED,
-                                                          visible=not statuses[topic['status']]['flag']),
+                                        ft.ElevatedButton(
+                                            text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
+                                            visible=statuses[topic['status']]['flag'],
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                        ),
+                                        ft.ElevatedButton(
+                                            text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
+                                            visible=statuses[topic['status']]['flag'],
+                                            bgcolor=ft.colors.RED
+                                        ),
+                                        ft.ElevatedButton(
+                                            text=labels['buttons']['group_info'], icon=ft.icons.FILE_OPEN_ROUNDED,
+                                            visible=not statuses[topic['status']]['flag'],
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER
+                                        ),
                                     ]
                                 )
                             ]
@@ -194,7 +198,7 @@ def main(page: ft.Page):
                             alignment=ft.MainAxisAlignment.CENTER,
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             controls=[
-                                ft.TextButton(icon=ft.icons.ADD, text="Добавить новую тему", on_click=None, scale=1.25)
+                                ft.TextButton(icon=ft.icons.ADD, text=labels['elements']['add_topic_btn'], on_click=None, scale=1.25)
                             ]
                         ),
                         padding=75
@@ -215,12 +219,12 @@ def main(page: ft.Page):
     def get_jury():
         statuses = {
             "waiting": {
-                "title": "Ожидание регистрации",
+                "title": labels['statuses']['jury_waiting'],
                 "flag": True,
                 "icon": ft.Icon(ft.icons.ACCESS_TIME_ROUNDED, color=ft.colors.AMBER)
             },
             "registered": {
-                "title": "Зарегистрирован",
+                "title": labels['statuses']['jury_registered'],
                 "flag": False,
                 "icon": ft.Icon(ft.icons.CHECK_CIRCLE_OUTLINE_OUTLINED, color=ft.colors.GREEN)
             },
@@ -235,10 +239,7 @@ def main(page: ft.Page):
                             controls=[
                                 ft.Column(
                                     controls=[
-                                        ft.Row([
-                                            ft.Icon(ft.icons.ACCOUNT_CIRCLE_ROUNDED),
-                                            ft.Text(jury['name'], size=20, weight=ft.FontWeight.W_400)
-                                        ]),
+                                        ft.Text(jury['name'], size=20, weight=ft.FontWeight.W_400),
                                         ft.Row([
                                             statuses[jury['status']]['icon'],
                                             ft.Text(f"{statuses[jury['status']]['title']}", size=20, weight=ft.FontWeight.W_400)
@@ -250,14 +251,16 @@ def main(page: ft.Page):
                                     scroll=ft.ScrollMode.ADAPTIVE,
                                     controls=[
                                         ft.ElevatedButton(
-                                            text="Удалить",
+                                            text=labels['buttons']['delete'],
                                             icon=ft.icons.DELETE_ROUNDED,
+                                            bgcolor=ft.colors.RED,
                                             on_click=None
                                         ),
                                         ft.ElevatedButton(
-                                            text="Ссылка", icon=ft.icons.LINK_ROUNDED,
+                                            text=labels['buttons']['link'], icon=ft.icons.LINK_ROUNDED,
                                             visible=statuses[jury['status']]['flag'],
                                             data=jury['pass_phrase'],
+                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
                                             on_click=get_jury_link
                                         )
                                     ]
@@ -287,7 +290,7 @@ def main(page: ft.Page):
                                               error_content=ft.ProgressRing()
                                               ),
                                      ),
-                        title_text("Данные отсутствуют")
+                        title_text(labels['elements']['no_data'])
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -297,8 +300,8 @@ def main(page: ft.Page):
         )
 
     def get_jury_link(e: ft.ControlEvent):
-        page.set_clipboard(f"https://t.me/bot_name?start=newjury_{e.control.data}")
-        open_snackbar("Пригласительная ссылка скопирована")
+        page.set_clipboard(labels['elements']['bot_link'].format(e.control.data))
+        open_snackbar(labels['snack_bars']['link_copied'])
 
     def change_navbar_tab(e):
         global current_tab_index
@@ -358,7 +361,7 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
-            change_navbar_tab(0)
+            change_navbar_tab(2)
 
         elif target == "error":
             page.add(ft.Container(error_col, expand=True), footer)
@@ -379,7 +382,7 @@ def main(page: ft.Page):
 
     def copy_error_text(e: ft.ControlEvent):
         page.set_clipboard(elements.global_vars.ERROR_TEXT)
-        open_snackbar("Текст ошибки скопирован")
+        open_snackbar(labels['snack_bars']['error_text_copied'])
 
     def title_text(text: str):
         return ft.Text(text, size=30, font_family="Geologica", weight=ft.FontWeight.W_900,
@@ -387,7 +390,7 @@ def main(page: ft.Page):
 
     def update():
         if platform.system() == 'Windows':
-            open_snackbar("Действие недоступно")
+            open_snackbar(labels['snack_bars']['action_unavaliable'])
         else:
             open_dialog(loading_dialog)
             os.system("/root/controlupdate.sh")
@@ -398,10 +401,10 @@ def main(page: ft.Page):
         print(auth_data['login'], auth_data['password'])
         if login_field.value.strip() == auth_data['login'] and password_field.value.strip() == auth_data['password']:
             password_field.value = ""
-            open_snackbar("С возвращением!", bg_color=ft.colors.GREEN, text_color=ft.colors.WHITE)
+            open_snackbar(labels['snack_bars']['welcome'], bg_color=ft.colors.GREEN, text_color=ft.colors.WHITE)
             change_screen("main")
         else:
-            open_snackbar("Неверный логин или пароль", bg_color=ft.colors.RED, text_color=ft.colors.WHITE)
+            open_snackbar(labels['snack_bars']['wrong_login'], bg_color=ft.colors.RED, text_color=ft.colors.WHITE)
 
     def open_dialog(dialog: ft.AlertDialog):
         page.dialog = dialog
@@ -429,7 +432,7 @@ def main(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
                 ft.ProgressRing(scale=1.5),
-                ft.Container(ft.Text("Загружаем", size=20), margin=ft.margin.only(top=20))
+                ft.Container(ft.Text(labels['elements']['loading'], size=20), margin=ft.margin.only(top=20))
             ]
         )
     )
@@ -445,20 +448,20 @@ def main(page: ft.Page):
     )
 
     login_field = ft.TextField(
-        label="Логин", text_align=ft.TextAlign.LEFT,
+        label=labels['fields']['login'], text_align=ft.TextAlign.LEFT,
         width=250, on_change=validate_login,
         height=70
     )
     password_field = ft.TextField(
-        label="Пароль", text_align=ft.TextAlign.LEFT,
+        label=labels['fields']['password'], text_align=ft.TextAlign.LEFT,
         width=250, password=True, on_change=validate_login,
         can_reveal_password=True, height=70, on_submit=lambda _: login(),
     )
-    button_login = ft.ElevatedButton("Войти", width=250, on_click=lambda _: login(),
+    button_login = ft.ElevatedButton(labels['buttons']['login'], width=250, on_click=lambda _: login(),
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
-    button_update = ft.OutlinedButton("Обновить проект", width=250, on_click=lambda _: update(), height=50)
+    button_update = ft.OutlinedButton(labels['buttons']['update_project'], width=250, on_click=lambda _: update(), height=50)
 
     login_col = ft.Column(
         controls=[
@@ -486,10 +489,13 @@ def main(page: ft.Page):
                 ft.Container(
                     content=ft.Column(
                         controls=[
-                            title_text("Ошибка БД"),
+                            title_text(labels['elements']['db_error_title']),
                             error_text,
-                            ft.ElevatedButton(text="Скопировать текст ошибки", icon=ft.icons.COPY_ROUNDED,
-                                              on_click=copy_error_text)
+                            ft.ElevatedButton(
+                                text=labels['buttons']['copy_error_text'],
+                                icon=ft.icons.COPY_ROUNDED,
+                                on_click=copy_error_text
+                            )
                         ]
                     ),
                     padding=15
@@ -500,7 +506,11 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
-    vertext = ft.Text("", text_align=ft.TextAlign.START, size=16)
+    vertext = ft.Text(
+        value=None,
+        text_align=ft.TextAlign.START,
+        size=16
+    )
     footer = ft.Row(
         controls=[
             vertext
@@ -508,15 +518,13 @@ def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START
     )
 
-    vertext.value = f"сборка {get_current_commit_hash()}"
+    vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if elements.global_vars.DB_FAIL:
-        error_text.value = f"При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: \n{elements.global_vars.ERROR_TEXT}"
+        error_text.value = labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT)
         change_screen('error')
     else:
         change_screen("main")
-    # page.dialog = None
-    # close_dialog(loading_dialog)
     page.update()
 
 
@@ -526,7 +534,7 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = create_db_connection()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main, use_color_emoji=True, view=ft.AppView.WEB_BROWSER)
+        ft.app(assets_dir='assets', target=main, use_color_emoji=True)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))

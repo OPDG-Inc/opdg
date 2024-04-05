@@ -238,7 +238,7 @@ def main(page: ft.Page):
                         padding=15
                     ),
                     elevation=10,
-                    # height=200,
+                    height=200,
                     col={"lg": 1},
                 )
                 rr.controls.append(topic_card)

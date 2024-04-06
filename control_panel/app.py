@@ -951,7 +951,7 @@ def main(page: ft.Page):
                 confirm_field
             ],
             width=350,
-            height=120
+            height=150
         ),
         actions=[
             ft.ElevatedButton(

@@ -4,7 +4,9 @@ import subprocess
 import time
 
 import flet as ft
+import requests
 from mysql.connector import connect, Error as sql_error
+from dotenv import load_dotenv
 
 from functions import load_config_file
 from elements.screens import screens
@@ -18,14 +20,16 @@ current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 
+load_dotenv()
+
 
 def create_db_connection():
     try:
         connection = connect(
-            host=os.getenv('db_host'),
-            user="developer",
-            password="kLRWua&sAHT4sXB",
-            database="opd"
+            host=os.getenv('DB_HOST'),
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            database=os.getenv('DB_NAME')
         )
         cur = connection.cursor(dictionary=True)
         connection.autocommit = True
@@ -104,6 +108,50 @@ def main(page: ft.Page):
         else:
             return cur.fetchone()
 
+    def get_stats():
+        elements.global_vars.GROUP_COUNT = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
+        elements.global_vars.PART_COUNT = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
+        elements.global_vars.VIDEOS = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+
+        stats_card = ft.Card(
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            ft.Row(
+                                [
+                                    ft.Container(ft.Text("Статистика", size=20, weight=ft.FontWeight.W_700), expand=True),
+                                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip="Обновить данные")
+                                ]
+                            ),
+                            margin=ft.margin.only(bottom=20)
+                        ),
+                        statistic_tile(
+                            title="Количество групп",
+                            descr=f"{elements.global_vars.GROUP_COUNT}",
+                            icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
+                        ),
+                        statistic_tile(
+                            title="Количество участников",
+                            descr=f"{elements.global_vars.PART_COUNT}",
+                            icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
+                        ),
+                        statistic_tile(
+                            title="Загружено видео",
+                            descr=f"{elements.global_vars.VIDEOS} из {elements.global_vars.GROUP_COUNT}",
+                            icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
+                        )
+                    ]
+                ),
+                padding=15
+            ),
+            elevation=10,
+            width=450,
+            col={"lg": 1}
+        )
+        page.controls[-1].content.controls.insert(0, stats_card)
+        page.update()
+
     def get_groups():
         statuses = {
             'waiting': {
@@ -116,7 +164,7 @@ def main(page: ft.Page):
             }
         }
         rr = ft.ResponsiveRow(columns=4)
-        groups_list = get_from_db("SELECT * FROM student_groups", many=True)
+        groups_list = get_from_db("SELECT * FROM sgroups", many=True)
         if len(groups_list) > 0:
             for group in groups_list:
 
@@ -187,7 +235,7 @@ def main(page: ft.Page):
             page.add(rr)
         else:
             if elements.global_vars.DB_FAIL:
-                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
             else:
                 show_error('empty_list', labels['errors']['empty_list'])
         page.update()
@@ -245,11 +293,11 @@ def main(page: ft.Page):
                                             data=f"topic_{topic['topic_id']}",
                                             bgcolor=ft.colors.RED
                                         ),
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['group_info'], icon=ft.icons.FILE_OPEN_ROUNDED,
-                                            visible=not statuses[topic['status']]['flag'],
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER
-                                        ),
+                                        # ft.ElevatedButton(
+                                        #     text=labels['buttons']['group_info'], icon=ft.icons.FILE_OPEN_ROUNDED,
+                                        #     visible=not statuses[topic['status']]['flag'],
+                                        #     bgcolor=ft.colors.PRIMARY_CONTAINER
+                                        # ),
                                     ],
                                     alignment=ft.MainAxisAlignment.END
                                 )
@@ -383,6 +431,11 @@ def main(page: ft.Page):
 
         open_dialog(edit_topic_dialog)
 
+    def goto_stats():
+        page.controls[-1].content.controls.pop(0)
+        get_stats()
+        open_snackbar(labels['snack_bars']['data_updated'])
+
     def show_part_list(e: ft.ControlEvent):
         statuses = {
             'captain': {
@@ -431,7 +484,7 @@ def main(page: ft.Page):
         page.floating_action_button = None
 
         if tab_index in [0, 1, 2]:
-            open_loading_snackbar("Загружаем")
+            open_loading_snackbar(labels['snack_bars']['loading'])
             time.sleep(1)
 
         if tab['fab'] is not None:
@@ -452,35 +505,7 @@ def main(page: ft.Page):
                 ft.Container(
                     content=ft.ResponsiveRow(
                         [
-                            ft.Card(
-                                ft.Container(
-                                    content=ft.Column(
-                                        [
-                                            ft.Container(title_text("Статистика"), margin=ft.margin.only(bottom=20)),
-                                            statistic_tile(
-                                                title="Количество групп",
-                                                descr="15",
-                                                icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
-                                            ),
-                                            statistic_tile(
-                                                title="Количество участников",
-                                                descr="127",
-                                                icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
-                                            ),
-                                            statistic_tile(
-                                                title="Загружено видео",
-                                                descr="0 из 79",
-                                                icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
-                                            )
-                                        ]
-                                    ),
-                                    padding=15
-                                ),
-                                elevation=10,
-                                width=450,
-                                # height=500,
-                                col={"lg": 1}
-                            ),
+
                             ft.Card(
                                 ft.Container(
                                     content=ft.Column(
@@ -491,21 +516,24 @@ def main(page: ft.Page):
                                                 descr="Удаляются все темы, которые находятся в базе данных",
                                                 icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
                                                 btn_text="Удалить темы",
-                                                btn_action=None
+                                                btn_data='manytopic',
+                                                btn_action=delete_element
                                             ),
                                             settings_tile(
                                                 title="Группы",
-                                                descr="Удаляются все участники, очищается список групп, в том числе рейтинг",
+                                                descr="Удаляются все участники, загруженные видео, очищается список групп, в том числе рейтинг",
                                                 icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
                                                 btn_text="Удалить группы",
-                                                btn_action=None
+                                                btn_data='manysgroups',
+                                                btn_action=delete_element
                                             ),
                                             settings_tile(
                                                 title="Жюри",
                                                 descr="Удаляется всё жюри с потерей доступа к оцениваю работ",
                                                 icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
                                                 btn_text="Удалить жюри",
-                                                btn_action=None
+                                                btn_data='manyjury',
+                                                btn_action=delete_element
                                             )
                                         ]
                                     ),
@@ -527,21 +555,24 @@ def main(page: ft.Page):
                                                 descr="Токен для связи бота с Яндекс.Диском",
                                                 icon=ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30),
                                                 btn_text="Изменить токен",
-                                                btn_action=None
+                                                btn_data='OAUTH_TOKEN',
+                                                btn_action=get_update_params
                                             ),
                                             settings_tile(
                                                 title="Bot-токен",
                                                 descr="Токен для связи с Telegram API",
                                                 icon=ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30),
                                                 btn_text="Изменить токен",
-                                                btn_action=None
+                                                btn_data='BOT_TOKEN',
+                                                btn_action=get_update_params
                                             ),
                                             settings_tile(
                                                 title="Пароль",
                                                 descr="Пароль для входа в панель управления и подтверждения действий",
                                                 icon=ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30),
                                                 btn_text="Изменить пароль",
-                                                btn_action=None
+                                                btn_data='PASSWORD',
+                                                btn_action=get_update_params
                                             )
                                         ]
                                     ),
@@ -561,6 +592,7 @@ def main(page: ft.Page):
                     # expand=True
                 )
             )
+            get_stats()
 
         page.update()
 
@@ -580,7 +612,7 @@ def main(page: ft.Page):
         )
         return ft.Container(tile, margin=ft.margin.only(top=-15))
 
-    def settings_tile(title: str, descr: str, btn_text: str, btn_action, icon):
+    def settings_tile(title: str, descr: str, btn_text: str, btn_action, icon, btn_data: str):
         tile = ft.ListTile(
             title=ft.Row(
                 [
@@ -594,15 +626,116 @@ def main(page: ft.Page):
                     ft.ElevatedButton(
                         width=200,
                         text=btn_text,
-                        on_click=lambda _: btn_action
+                        data=btn_data,
+                        on_click=btn_action
                     )
                 ]
             ),
         )
         return ft.Container(tile, margin=ft.margin.only(top=-15))
 
+    def validate_param(e: ft.ControlEvent):
+        if param_field.value:
+            edit_params_dialog.actions[0].disabled = False
+        else:
+            edit_params_dialog.actions[0].disabled = True
+        page.update()
+
+    param_field = ft.TextField(
+        password=True,
+        can_reveal_password=False,
+        border_width=3,
+        hint_text='Введите значение параметра',
+        on_change=validate_param
+    )
+
+    # print(ft.TextField().border_color)
+
+    def check_param(e: ft.ControlEvent):
+        edit_params_dialog.actions[0].text = "Проверяем"
+        edit_params_dialog.actions[0].disabled = True
+        page.update()
+        param = e.control.data
+        url, headers = "", {}
+
+        if param == 'OAUTH_TOKEN':
+            url = "https://cloud-api.yandex.net/v1/disk"
+            headers = {
+                'Accept': 'application/json',
+                'Authorization': f'OAuth {param_field.value}'
+            }
+        elif param == 'BOT_TOKEN':
+            url = f"https://api.telegram.org/bot{param_field.value}/getMe"
+
+        print(url)
+        print(headers)
+        response = requests.get(url=url, headers=headers)
+        if response.status_code == 200:
+            param_field.border_color = ft.colors.GREEN
+            edit_params_dialog.actions[-1].disabled = False
+        else:
+            param_field.border_color = ft.colors.RED
+            edit_params_dialog.actions[-1].disabled = True
+        param_field.helper_text = f"Код ответа: {response.status_code}"
+
+        edit_params_dialog.actions[0].disabled = False
+        edit_params_dialog.actions[0].text = "Проверить"
+
+        page.update()
+        time.sleep(3)
+        param_field.border_color = None
+        param_field.helper_text = ''
+        page.update()
+
+    def update_env_var(variable, value):
+        parent_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env_file_path = os.path.join(parent_directory, '.env')
+        with open(env_file_path, 'r') as file:
+            lines = file.readlines()
+
+        for i in range(len(lines)):
+            if lines[i].startswith(f'{variable}='):
+                lines[i] = f'{variable}={value}\n'
+
+        with open(env_file_path, 'w') as file:
+            file.writelines(lines)
+
+    def update_param(e: ft.ControlEvent):
+        param = e.control.data
+        update_env_var(param, param_field.value)
+        close_dialog(edit_params_dialog)
+        open_snackbar(labels['snack_bars']['data_updated'])
+
+    def get_update_params(e: ft.ControlEvent):
+        param = e.control.data
+        params = {
+            'OAUTH_TOKEN': {
+                'label': "OAuth-токен",
+                'icon': ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30)
+            },
+            'BOT_TOKEN': {
+                'label': "Bot-токен",
+                'icon': ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30)
+            },
+            'PASSWORD': {
+                'label': "Пароль",
+                'icon': ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30)
+            }
+        }
+        param_field.label = params[param]['label']
+        # param_field.value = os.getenv(param)
+        edit_params_dialog.actions[-1].data = param
+        edit_params_dialog.actions[0].data = param
+        if param in ['OAUTH_TOKEN', 'BOT_TOKEN']:
+            edit_params_dialog.actions[-1].disabled = True
+            edit_params_dialog.actions[0].visible = True
+        else:
+            edit_params_dialog.actions[-1].disabled = False
+            edit_params_dialog.actions[0].visible = False
+        param_field.value = ""
+        open_dialog(edit_params_dialog)
+
     def change_screen(target: str):
-        # page.appbar.actions.clear()
         page.navigation_bar = None
         page.floating_action_button = None
         page.clean()
@@ -672,10 +805,8 @@ def main(page: ft.Page):
             os.system("/root/controlupdate.sh")
 
     def login():
-        print(login_field.value.strip(), password_field.value.strip())
         auth_data = load_config_file("config.json")['auth']
-        print(auth_data['login'], auth_data['password'])
-        if login_field.value.strip() == auth_data['login'] and password_field.value.strip() == auth_data['password']:
+        if login_field.value.strip() == auth_data['login'] and password_field.value.strip() == os.getenv('PASSWORD'):
             password_field.value = ""
             open_snackbar(labels['snack_bars']['welcome'], bg_color=ft.colors.GREEN, text_color=ft.colors.WHITE)
             change_screen("main")
@@ -700,15 +831,23 @@ def main(page: ft.Page):
 
     def delete_element(e: ft.ControlEvent):
         data = e.control.data.split("_")
-        get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
-        for index, card in enumerate(page.controls[-1].controls):
-            if card.data == int(data[1]):
-                page.controls[-1].controls.pop(index)
-                if len(page.controls[-1].controls) == 0:
-                    show_error('empty_list', labels['errors']['empty_list'])
-                page.update()
-                break
-        open_snackbar(labels['snack_bars']['element_deleted'])
+        if not data[0].startswith('many'):
+            get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
+            for index, card in enumerate(page.controls[-1].controls):
+                if card.data == int(data[1]):
+                    page.controls[-1].controls.pop(index)
+                    if len(page.controls[-1].controls) == 0:
+                        show_error('empty_list', labels['errors']['empty_list'])
+                    page.update()
+                    break
+            open_snackbar(labels['snack_bars']['element_deleted'])
+        else:
+            table = data[0].split('many')[-1]
+            get_from_db(f'TRUNCATE TABLE {table}')
+            if table == 'sgroups':
+                get_from_db("UPDATE topic SET status = 'free' WHERE status = 'busy'")
+                get_from_db(f'TRUNCATE TABLE participants')
+            open_snackbar(labels['snack_bars']['table_deleted'])
 
     def update_topic(e: ft.ControlEvent):
         get_from_db(f"UPDATE topic SET description = '{topic_description.value}' WHERE topic_id = {e.control.data}")
@@ -742,6 +881,40 @@ def main(page: ft.Page):
         label="Название",
         hint_text="Введите название темы",
         on_change=lambda _: validate_description_field(),
+    )
+
+    edit_params_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Row(
+            [
+                ft.Container(ft.Text(labels['elements']['edit_params_title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700), expand=True),
+                ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(edit_params_dialog))
+            ]
+        ),
+        content=ft.Column(
+            [
+                param_field
+            ],
+            width=700,
+            height=60
+        ),
+        actions=[
+            ft.ElevatedButton(
+                text=labels['buttons']['check'],
+                icon=ft.icons.CHECK_ROUNDED,
+                on_click=check_param,
+                visible=False,
+                disabled=True
+            ),
+            ft.ElevatedButton(
+                text=labels['buttons']['save'],
+                icon=ft.icons.SAVE_ROUNDED,
+                on_click=update_param,
+                disabled=True
+            )
+        ],
+        actions_alignment=ft.MainAxisAlignment.END
+
     )
 
     edit_topic_dialog = ft.AlertDialog(
@@ -853,9 +1026,10 @@ def main(page: ft.Page):
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if elements.global_vars.DB_FAIL:
-        show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT))
+        show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
     else:
         change_screen("login")
+
     page.update()
 
 
@@ -864,6 +1038,8 @@ DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
     connection, cur = create_db_connection()
+    for index, p in enumerate(os.environ):
+        print(index, p, os.environ[p])
     if platform.system() == 'Windows':
         ft.app(assets_dir='assets', target=main, use_color_emoji=True, upload_dir='assets/uploads')
     else:

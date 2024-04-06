@@ -1,7 +1,7 @@
 labels = {
     'errors': {
-      'db_connection': "При подключении к базе данных произошла ошибка. Обратитесь к администартору, сообщив текст ошибки: {0}",
-      'db_request': "При запросе к базе данных произошла ошибка: {0}",
+      'db_connection': "код ошибки: {0}",
+      'db_request': "код ошибки: {0}",
       'empty_list': "На этой странице ещё не добавлена информация",
     },
     'elements': {
@@ -15,7 +15,8 @@ labels = {
         'marks_title': "Оценки",
         'no_marks_subtitle': "не выставлены",
         'part_list': "Состав группы",
-        'edit_topic_title': "Редактирование темы"
+        'edit_topic_title': "Редактирование темы",
+        'edit_params_title': "Изменение параметра"
     },
     'buttons': {
         'delete': "Удалить",
@@ -23,6 +24,7 @@ labels = {
         'edit': "Изменить",
         'link': "Ссылка",
         'add': "Добавить",
+        'check': "Проверить",
         'group_info': "Информация о группе",
         'login': "Войти",
         'update_project': "Обновить проект",
@@ -44,7 +46,10 @@ labels = {
         'action_unavaliable': "Действие недоступно",
         'group_list_copied': "Состав группы скопирован",
         'element_deleted': "Элемент удалён",
+        'table_deleted': "Таблица удалена",
         'data_edited': "Данные изменены",
+        'data_updated': "Данные обновлены",
+        'loading': "Загружаем"
     },
     'statuses': {
         'topic_free': "Свободна",

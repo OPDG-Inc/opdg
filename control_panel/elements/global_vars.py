@@ -1,2 +1,6 @@
 DB_FAIL = False
 ERROR_TEXT = ""
+
+GROUP_COUNT = 0
+PART_COUNT = 0
+VIDEOS = 0

@@ -4,7 +4,7 @@ tabs_config = {
     0: {
         "index": "topics",
         "title": "Темы",
-        "fab": True,
+        "fab": None,
         "fab_text": "Импорт",
         "fab_icon": icons.UPLOAD_ROUNDED,
         "fab_target": "import_themes",
@@ -23,7 +23,7 @@ tabs_config = {
     2: {
         "index": "jury",
         "title": "Жюри",
-        "fab": True,
+        "fab": None,
         "fab_text": "Добавить",
         "fab_icon": icons.GROUP_ADD_ROUNDED,
         "fab_target": "add_jury",

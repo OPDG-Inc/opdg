@@ -1,4 +1,4 @@
-from control_panel.elements.text import labels
+from elements.text import labels
 
 targets = {
     'empty_list': {

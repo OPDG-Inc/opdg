@@ -42,7 +42,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
-        # font_family="Geologica",
+        font_family="Geologica",
         color_scheme=ft.ColorScheme(
             primary=ft.colors.WHITE
         )
@@ -276,7 +276,10 @@ def main(page: ft.Page):
                 rr.controls.append(topic_card)
             page.add(rr)
         else:
-            show_error('empty_list', labels['errors']['empty_list'])
+            if elements.global_vars.DB_FAIL:
+                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+            else:
+                show_error('empty_list', labels['errors']['empty_list'])
         page.update()
 
     def get_jury():
@@ -339,7 +342,10 @@ def main(page: ft.Page):
                 rr.controls.append(jury_card)
             page.add(rr)
         else:
-            show_error('empty_list', labels['errors']['empty_list'])
+            if elements.global_vars.DB_FAIL:
+                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+            else:
+                show_error('empty_list', labels['errors']['empty_list'])
 
     def show_error(target: str, description: str):
         page.scroll = None

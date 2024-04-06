@@ -227,19 +227,8 @@ def main(page: ft.Page):
                                             ft.Text(statuses[topic['status']]['title'], size=18)
                                         ]
                                     ),
-                                    expand=True
+                                    # expand=True
                                 ),
-                                # ft.Column(
-                                #     controls=[
-                                #         ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, weight=ft.FontWeight.W_400),
-                                #         ft.Row(
-                                #             [
-                                #                 statuses[topic['status']]['icon'],
-                                #                 ft.Text(statuses[topic['status']]['title'], size=20)
-                                #             ]
-                                #         ),
-                                #     ],
-                                # ),
                                 ft.Row(
                                     controls=[
                                         ft.ElevatedButton(
@@ -269,7 +258,7 @@ def main(page: ft.Page):
                         padding=15
                     ),
                     elevation=10,
-                    height=200,
+                    # height=200,
                     col={"lg": 1},
                     data=topic['topic_id']
                 )

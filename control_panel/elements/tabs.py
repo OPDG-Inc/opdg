@@ -23,7 +23,7 @@ tabs_config = {
     2: {
         "index": "jury",
         "title": "Жюри",
-        "fab": None,
+        "fab": True,
         "fab_text": "Добавить",
         "fab_icon": icons.GROUP_ADD_ROUNDED,
         "fab_target": "add_jury",

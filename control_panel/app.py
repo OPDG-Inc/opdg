@@ -1,7 +1,10 @@
+import datetime
+import hashlib
 import os
 import platform
 import subprocess
 import time
+import uuid
 
 import flet as ft
 import requests
@@ -129,17 +132,17 @@ def main(page: ft.Page):
                         statistic_tile(
                             title="Количество групп",
                             descr=f"{elements.global_vars.GROUP_COUNT}",
-                            icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
+                            # icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
                         ),
                         statistic_tile(
                             title="Количество участников",
                             descr=f"{elements.global_vars.PART_COUNT}",
-                            icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
+                            # icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
                         ),
                         statistic_tile(
                             title="Загружено видео",
                             descr=f"{elements.global_vars.VIDEOS} из {elements.global_vars.GROUP_COUNT}",
-                            icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
+                            # icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
                         )
                     ]
                 ),
@@ -237,7 +240,7 @@ def main(page: ft.Page):
             if elements.global_vars.DB_FAIL:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
             else:
-                show_error('empty_list', labels['errors']['empty_list'])
+                show_error('empty_groups', labels['errors']['empty_groups'])
         page.update()
 
     def get_topics():
@@ -289,8 +292,8 @@ def main(page: ft.Page):
                                         ft.ElevatedButton(
                                             text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
                                             visible=statuses[topic['status']]['flag'],
-                                            on_long_press=delete_element,
-                                            data=f"topic_{topic['topic_id']}",
+                                            on_click=confirm_delete,
+                                            data=f"delete_topic_{topic['topic_id']}",
                                             bgcolor=ft.colors.RED
                                         ),
                                         # ft.ElevatedButton(
@@ -316,7 +319,7 @@ def main(page: ft.Page):
             if elements.global_vars.DB_FAIL:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
             else:
-                show_error('empty_list', labels['errors']['empty_list'])
+                show_error('empty_topics', labels['errors']['empty_topics'])
         page.update()
 
     def get_jury():
@@ -354,8 +357,8 @@ def main(page: ft.Page):
                                             text=labels['buttons']['delete'],
                                             icon=ft.icons.DELETE_ROUNDED,
                                             bgcolor=ft.colors.RED,
-                                            data=f"jury_{jury['jury_id']}",
-                                            on_long_press=delete_element
+                                            data=f"delete_jury_{jury['jury_id']}",
+                                            on_click=confirm_delete
                                         ),
                                         ft.ElevatedButton(
                                             text=labels['buttons']['link'], icon=ft.icons.LINK_ROUNDED,
@@ -382,7 +385,7 @@ def main(page: ft.Page):
             if elements.global_vars.DB_FAIL:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
             else:
-                show_error('empty_list', labels['errors']['empty_list'])
+                show_error('empty_jury', labels['errors']['empty_jury'])
 
     def show_error(target: str, description: str):
         page.scroll = None
@@ -478,6 +481,10 @@ def main(page: ft.Page):
         page.clean()
         page.appbar.actions.clear()
 
+        appbar.leading = ft.IconButton(
+            icon=screens['main']['lead_icon'],
+            on_click=lambda _: change_screen(screens['main']['target'])
+        )
         tab = tabs_config[tab_index]
         appbar.title.value = tab['title']
         page.scroll = tab['scroll']
@@ -516,24 +523,24 @@ def main(page: ft.Page):
                                                 descr="Удаляются все темы, которые находятся в базе данных",
                                                 icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
                                                 btn_text="Удалить темы",
-                                                btn_data='manytopic',
-                                                btn_action=delete_element
+                                                btn_data='delete_manytopic',
+                                                btn_action=confirm_delete
                                             ),
                                             settings_tile(
                                                 title="Группы",
                                                 descr="Удаляются все участники, загруженные видео, очищается список групп, в том числе рейтинг",
                                                 icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
                                                 btn_text="Удалить группы",
-                                                btn_data='manysgroups',
-                                                btn_action=delete_element
+                                                btn_data='delete_manysgroups',
+                                                btn_action=confirm_delete
                                             ),
                                             settings_tile(
                                                 title="Жюри",
                                                 descr="Удаляется всё жюри с потерей доступа к оцениваю работ",
                                                 icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
                                                 btn_text="Удалить жюри",
-                                                btn_data='manyjury',
-                                                btn_action=delete_element
+                                                btn_data='delete_manyjury',
+                                                btn_action=confirm_delete
                                             )
                                         ]
                                     ),
@@ -596,11 +603,11 @@ def main(page: ft.Page):
 
         page.update()
 
-    def statistic_tile(title: str, descr: str, icon):
+    def statistic_tile(title: str, descr: str):
         tile = ft.ListTile(
             title=ft.Row(
                 [
-                    icon,
+                    # icon,
                     ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
                 ]
             ),
@@ -649,7 +656,13 @@ def main(page: ft.Page):
         on_change=validate_param
     )
 
-    # print(ft.TextField().border_color)
+    def validate_jury_field(e: ft.ControlEvent):
+        print(len(jury_name_field.value.strip().split(" ")))
+        if len(jury_name_field.value.strip().split(" ")) in [2, 3]:
+            new_jury_card.content.content.controls[-1].controls[-1].disabled = False
+        else:
+            new_jury_card.content.content.controls[-1].controls[-1].disabled = True
+        page.update()
 
     def check_param(e: ft.ControlEvent):
         edit_params_dialog.actions[0].text = "Проверяем"
@@ -706,6 +719,15 @@ def main(page: ft.Page):
         close_dialog(edit_params_dialog)
         open_snackbar(labels['snack_bars']['data_updated'])
 
+    def add_jury(e: ft.ControlEvent):
+        pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
+        print(pass_phrase)
+        get_from_db(f"INSERT INTO jury (name, pass_phrase) VALUES ('{jury_name_field.value}', '{pass_phrase}')")
+        jury_name_field.value = ''
+        change_screen("main")
+        change_navbar_tab(2)
+        new_jury_card.content.content.controls[-1].controls[-1].disabled = True
+
     def get_update_params(e: ft.ControlEvent):
         param = e.control.data
         params = {
@@ -754,7 +776,11 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
-            change_navbar_tab(0)
+            change_navbar_tab(page.navigation_bar.selected_index)
+
+        elif target == "add_jury":
+            page.navigation_bar = navbar
+            page.add(new_jury_card)
 
         # elif target == "error":
         #     page.add(ft.Container(error_col, expand=True), )  # footer)
@@ -829,8 +855,29 @@ def main(page: ft.Page):
         except Exception as e:
             return e
 
-    def delete_element(e: ft.ControlEvent):
-        data = e.control.data.split("_")
+    def confirm_delete(e: ft.ControlEvent):
+        print('data', e.control.data)
+        confirmation_dialog.actions[-1].data = e.control.data
+        open_dialog(confirmation_dialog)
+
+    def check_confirm(e: ft.ControlEvent):
+        if confirm_field.value == str(datetime.datetime.now().date()).replace('-', ''):
+            close_dialog(confirmation_dialog)
+
+            action = e.control.data.split("_")[0]
+            if action == 'delete':
+                delete_element(e.control.data.split("_")[1:])
+
+            confirm_field.value = ''
+        else:
+            confirm_field.border_color = ft.colors.RED
+            page.update()
+            time.sleep(2)
+            confirm_field.border_color = None
+            page.update()
+
+    def delete_element(data):
+        print(data)
         if not data[0].startswith('many'):
             get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
             for index, card in enumerate(page.controls[-1].controls):
@@ -881,6 +928,39 @@ def main(page: ft.Page):
         label="Название",
         hint_text="Введите название темы",
         on_change=lambda _: validate_description_field(),
+    )
+
+    confirm_field = ft.TextField(
+        label='Код подтверждения',
+        hint_text='Введите код подтверждения',
+        text_align=ft.TextAlign.CENTER,
+        border_width=3
+    )
+
+    confirmation_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Row(
+            [
+                ft.Container(ft.Text("Подтверждение действия", size=20, font_family="Geologica", weight=ft.FontWeight.W_700), expand=True),
+                ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(confirmation_dialog))
+            ]
+        ),
+        content=ft.Column(
+            [
+                ft.Text(f"Чтобы подтвердить своё действие, введите в окно {str(datetime.datetime.now().date()).replace('-', '')}", size=18),
+                confirm_field
+            ],
+            width=350,
+            height=120
+        ),
+        actions=[
+            ft.ElevatedButton(
+                text="Подтвердить",
+                icon=ft.icons.CHECK_ROUNDED,
+                on_click=check_confirm
+            )
+        ],
+        actions_alignment=ft.MainAxisAlignment.END
     )
 
     edit_params_dialog = ft.AlertDialog(
@@ -1009,6 +1089,38 @@ def main(page: ft.Page):
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    )
+
+    jury_name_field = ft.TextField(
+        label="ФИО",
+        hint_text="Иванов Иван Иванович",
+        on_change=validate_jury_field
+    )
+
+    new_jury_card = ft.Card(
+        ft.Container(
+            content=ft.Column(
+                [
+                    ft.Container(jury_name_field, expand=True),
+                    ft.Row(
+                        [
+                            ft.ElevatedButton(
+                                text=labels['buttons']['add'],
+                                icon=ft.icons.ADD_ROUNDED,
+                                on_click=add_jury,
+                                disabled=True
+
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.END
+                    )
+                ],
+                width=600,
+                height=120
+            ),
+            padding=15
+        ),
+        elevation=10
     )
 
     vertext = ft.Text(

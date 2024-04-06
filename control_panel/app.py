@@ -461,8 +461,37 @@ def main(page: ft.Page):
         elif tab_index == 3:
             page.add(
                 ft.Container(
-                    content=ft.Column(
+                    content=ft.ResponsiveRow(
                         [
+                            ft.Card(
+                                ft.Container(
+                                    content=ft.Column(
+                                        [
+                                            ft.Container(title_text("Статистика"), margin=ft.margin.only(bottom=20)),
+                                            statistic_tile(
+                                                title="Количество групп",
+                                                descr="15",
+                                                icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
+                                            ),
+                                            statistic_tile(
+                                                title="Количество участников",
+                                                descr="127",
+                                                icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
+                                            ),
+                                            statistic_tile(
+                                                title="Загружено видео",
+                                                descr="0 из 79",
+                                                icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
+                                            )
+                                        ]
+                                    ),
+                                    padding=15
+                                ),
+                                elevation=10,
+                                width=450,
+                                height=500,
+                                col={"lg": 1}
+                            ),
                             ft.Card(
                                 ft.Container(
                                     content=ft.Column(
@@ -494,7 +523,9 @@ def main(page: ft.Page):
                                     padding=15
                                 ),
                                 elevation=10,
-                                width=450
+                                width=450,
+                                height=500,
+                                col={"lg": 1}
                             ),
 
                             ft.Card(
@@ -528,17 +559,37 @@ def main(page: ft.Page):
                                     padding=15
                                 ),
                                 elevation=10,
-                                width=450
+                                width=450,
+                                height=500,
+                                col={"lg": 1}
                             )
                         ],
+                        columns=3,
                         alignment=ft.MainAxisAlignment.START,
-                        horizontal_alignment=ft.CrossAxisAlignment.START
+                        width=1200
+                        # horizontal_alignment=ft.CrossAxisAlignment.START
                     ),
                     # expand=True
                 )
             )
 
         page.update()
+
+    def statistic_tile(title: str, descr: str, icon):
+        tile = ft.ListTile(
+            title=ft.Row(
+                [
+                    icon,
+                    ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
+                ]
+            ),
+            subtitle=ft.Column(
+                [
+                    ft.Text(descr, size=20, weight=ft.FontWeight.W_600),
+                ]
+            ),
+        )
+        return ft.Container(tile, margin=ft.margin.only(top=-15))
 
     def settings_tile(title: str, descr: str, btn_text: str, btn_action, icon):
         tile = ft.ListTile(
@@ -552,6 +603,7 @@ def main(page: ft.Page):
                 [
                     ft.Text(descr, size=16),
                     ft.ElevatedButton(
+                        width=200,
                         text=btn_text,
                         on_click=lambda _: btn_action
                     )
@@ -797,68 +849,6 @@ def main(page: ft.Page):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
 
-    error_text = ""
-
-    # error_col = ft.Column(
-    #     controls=[
-    #         ft.Card(
-    #             ft.Container(
-    #                 ft.Column(
-    #                     [
-    #                         ft.Container(ft.Image(src="db_error.png",
-    #                                               fit=ft.ImageFit.CONTAIN,
-    #                                               height=120,
-    #                                               error_content=ft.ProgressRing()
-    #                                               ),
-    #                                      ),
-    #                         ft.Text("Ошибка базы данных", size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
-    #                         error_text,
-    #                         ft.ElevatedButton(
-    #                             text=labels['buttons']['copy_error_text'],
-    #                             icon=ft.icons.COPY_ROUNDED,
-    #                             on_click=copy_error_text
-    #                         )
-    #                         # title_text(labels['elements']['no_data'])
-    #                     ],
-    #                     alignment=ft.MainAxisAlignment.CENTER,
-    #                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    #                 ),
-    #                 expand=True,
-    #                 padding=15
-    #             ),
-    #             elevation=10,
-    #             width=800,
-    #             # height=200
-    #         )
-    #     ],
-    #     expand=True,
-    #     alignment=ft.MainAxisAlignment.CENTER,
-    #     horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    # )
-
-    # error_col = ft.Column(
-    #     controls=[
-    #         ft.Card(
-    #             ft.Container(
-    #                 content=ft.Column(
-    #                     controls=[
-    #                         title_text(labels['elements']['db_error_title']),
-    #                         error_text,
-    #                         ft.ElevatedButton(
-    #                             text=labels['buttons']['copy_error_text'],
-    #                             icon=ft.icons.COPY_ROUNDED,
-    #                             on_click=copy_error_text
-    #                         )
-    #                     ]
-    #                 ),
-    #                 padding=15
-    #             ),
-    #             elevation=15
-    #         ),
-    #     ],
-    #     alignment=ft.MainAxisAlignment.CENTER,
-    #     horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    # )
     vertext = ft.Text(
         value=None,
         text_align=ft.TextAlign.START,

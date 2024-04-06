@@ -489,7 +489,7 @@ def main(page: ft.Page):
                                 ),
                                 elevation=10,
                                 width=450,
-                                height=500,
+                                # height=500,
                                 col={"lg": 1}
                             ),
                             ft.Card(
@@ -524,7 +524,7 @@ def main(page: ft.Page):
                                 ),
                                 elevation=10,
                                 width=450,
-                                height=500,
+                                # height=500,
                                 col={"lg": 1}
                             ),
 
@@ -560,7 +560,7 @@ def main(page: ft.Page):
                                 ),
                                 elevation=10,
                                 width=450,
-                                height=500,
+                                # height=500,
                                 col={"lg": 1}
                             )
                         ],

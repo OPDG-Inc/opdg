@@ -416,7 +416,7 @@ def main(page: ft.Page):
             participants_dialog.content.controls.append(
                 ft.Container(
                     ft.ListTile(
-                        leading=statuses[part['status']]['icon'],
+                        # leading=statuses[part['status']]['icon'],
                         title=ft.Text(f"{part['name']}", size=20),
                         # title=ft.TextButton(part['name'], on_click=lambda _: page.set_clipboard(part)),
                         subtitle=ft.Text(part['study_group'], size=18)

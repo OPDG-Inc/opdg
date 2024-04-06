@@ -534,7 +534,7 @@ def main(page: ft.Page):
                         alignment=ft.MainAxisAlignment.START,
                         horizontal_alignment=ft.CrossAxisAlignment.START
                     ),
-                    expand=True
+                    # expand=True
                 )
             )
 
@@ -580,7 +580,7 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
-            change_navbar_tab(3)
+            change_navbar_tab(0)
 
         # elif target == "error":
         #     page.add(ft.Container(error_col, expand=True), )  # footer)
@@ -772,21 +772,21 @@ def main(page: ft.Page):
 
     login_col = ft.Column(
         controls=[
-            ft.Container(
-                ft.Lottie(
-                    src='https://lottie.host/bbf984e1-7cba-417a-8a6f-472105c726b0/joNPBJ5N73.json',
-                    # on_error=lambda _: open_snackbar("3453454")
-                    background_loading=True,
-                    scale=0.2
-                ),
-                margin=ft.margin.all(-460)
-            ),
-            # ft.Container(ft.Image(src="logo.png",
-            #                       fit=ft.ImageFit.CONTAIN,
-            #                       height=200,
-            #                       error_content=ft.ProgressRing()
-            #                       ),
-            #              ),
+            # ft.Container(
+            #     ft.Lottie(
+            #         src='https://lottie.host/bbf984e1-7cba-417a-8a6f-472105c726b0/joNPBJ5N73.json',
+            #         # on_error=lambda _: open_snackbar("3453454")
+            #         background_loading=True,
+            #         scale=0.2
+            #     ),
+            #     margin=ft.margin.all(-460)
+            # ),
+            ft.Container(ft.Image(src="logo.png",
+                                  fit=ft.ImageFit.CONTAIN,
+                                  height=200,
+                                  error_content=ft.ProgressRing()
+                                  ),
+                         ),
             login_field,
             password_field,
             button_login,

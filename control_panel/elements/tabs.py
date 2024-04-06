@@ -36,6 +36,6 @@ tabs_config = {
         "fab_text": "",
         "fab_icon": None,
         "fab_target": "",
-        "scroll": None,
+        "scroll": ScrollMode.ADAPTIVE,
     }
 }

@@ -60,8 +60,8 @@ def main(page: ft.Page):
     def open_loading_snackbar(text: str):
         content = ft.Row(
             [
-                ft.ProgressRing(color=ft.colors.BLACK, scale=0.8),
-                ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_500)
+                ft.ProgressRing(color=ft.colors.BLACK, scale=0.6),
+                ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             expand=True
@@ -77,7 +77,7 @@ def main(page: ft.Page):
     def open_snackbar(text: str, bg_color=None, text_color=None):
         # Оповещение в нижней части экрана
 
-        content = ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_500)
+        content = ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
         sb = ft.SnackBar(
             content=content,
             duration=1000
@@ -224,7 +224,7 @@ def main(page: ft.Page):
                                     subtitle=ft.Row(
                                         [
                                             statuses[topic['status']]['icon'],
-                                            ft.Text(statuses[topic['status']]['title'], size=20)
+                                            ft.Text(statuses[topic['status']]['title'], size=18)
                                         ]
                                     ),
                                     expand=True
@@ -307,7 +307,7 @@ def main(page: ft.Page):
                                     title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
                                     subtitle=ft.Row([
                                         statuses[jury['status']]['icon'],
-                                        ft.Text(f"{statuses[jury['status']]['title']}", size=18, weight=ft.FontWeight.W_400)
+                                        ft.Text(f"{statuses[jury['status']]['title']}", size=18)
                                     ])
                                 ),
                                 ft.Row(
@@ -417,9 +417,9 @@ def main(page: ft.Page):
                 ft.Container(
                     ft.ListTile(
                         # leading=statuses[part['status']]['icon'],
-                        title=ft.Text(f"{part['name']}", size=20),
+                        title=ft.Text(f"{part['name']}", size=18),
                         # title=ft.TextButton(part['name'], on_click=lambda _: page.set_clipboard(part)),
-                        subtitle=ft.Text(part['study_group'], size=18)
+                        subtitle=ft.Text(part['study_group'], size=16)
                     ),
                     margin=ft.margin.only(top=-20)
                 )
@@ -458,8 +458,107 @@ def main(page: ft.Page):
             get_groups()
         elif tab_index == 2:
             get_jury()
+        elif tab_index == 3:
+            page.add(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Card(
+                                ft.Container(
+                                    content=ft.Column(
+                                        [
+                                            ft.Container(title_text("Удаление данных"), margin=ft.margin.only(bottom=20)),
+                                            settings_tile(
+                                                title="Темы",
+                                                descr="Удаляются все темы, которые находятся в базе данных",
+                                                icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
+                                                btn_text="Удалить темы",
+                                                btn_action=None
+                                            ),
+                                            settings_tile(
+                                                title="Группы",
+                                                descr="Удаляются все участники, очищается список групп, в том числе рейтинг",
+                                                icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
+                                                btn_text="Удалить группы",
+                                                btn_action=None
+                                            ),
+                                            settings_tile(
+                                                title="Жюри",
+                                                descr="Удаляется всё жюри с потерей доступа к оцениваю работ",
+                                                icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
+                                                btn_text="Удалить жюри",
+                                                btn_action=None
+                                            )
+                                        ]
+                                    ),
+                                    padding=15
+                                ),
+                                elevation=10,
+                                width=450
+                            ),
+
+                            ft.Card(
+                                ft.Container(
+                                    content=ft.Column(
+                                        [
+                                            ft.Container(title_text("Авторизация"), margin=ft.margin.only(bottom=20)),
+                                            settings_tile(
+                                                title="OAuth-токен",
+                                                descr="Токен для связи бота с Яндекс.Диском",
+                                                icon=ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30),
+                                                btn_text="Изменить токен",
+                                                btn_action=None
+                                            ),
+                                            settings_tile(
+                                                title="Bot-токен",
+                                                descr="Токен для связи с Telegram API",
+                                                icon=ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30),
+                                                btn_text="Изменить токен",
+                                                btn_action=None
+                                            ),
+                                            settings_tile(
+                                                title="Пароль",
+                                                descr="Пароль для входа в панель управления и подтверждения действий",
+                                                icon=ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30),
+                                                btn_text="Изменить пароль",
+                                                btn_action=None
+                                            )
+                                        ]
+                                    ),
+                                    padding=15
+                                ),
+                                elevation=10,
+                                width=450
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.START,
+                        horizontal_alignment=ft.CrossAxisAlignment.START
+                    ),
+                    expand=True
+                )
+            )
 
         page.update()
+
+    def settings_tile(title: str, descr: str, btn_text: str, btn_action, icon):
+        tile = ft.ListTile(
+            title=ft.Row(
+                [
+                    icon,
+                    ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
+                ]
+            ),
+            subtitle=ft.Column(
+                [
+                    ft.Text(descr, size=16),
+                    ft.ElevatedButton(
+                        text=btn_text,
+                        on_click=lambda _: btn_action
+                    )
+                ]
+            ),
+        )
+        return ft.Container(tile, margin=ft.margin.only(top=-15))
 
     def change_screen(target: str):
         # page.appbar.actions.clear()
@@ -481,7 +580,7 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
-            change_navbar_tab(0)
+            change_navbar_tab(3)
 
         # elif target == "error":
         #     page.add(ft.Container(error_col, expand=True), )  # footer)
@@ -521,7 +620,7 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['error_text_copied'])
 
     def title_text(text: str):
-        return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_900,
+        return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_700,
                        text_align=ft.TextAlign.CENTER)
 
     def update():
@@ -647,7 +746,7 @@ def main(page: ft.Page):
 
     navbar = ft.NavigationBar(
         destinations=[
-            ft.NavigationDestination(icon=ft.icons.FORMAT_LIST_BULLETED_ROUNDED, label=tabs_config[0]['title']),
+            ft.NavigationDestination(icon=ft.icons.TOPIC_ROUNDED, label=tabs_config[0]['title']),
             ft.NavigationDestination(icon=ft.icons.GROUPS_2_ROUNDED, label=tabs_config[1]['title']),
             ft.NavigationDestination(icon=ft.icons.EMOJI_PEOPLE_ROUNDED, label=tabs_config[2]['title']),
             ft.NavigationDestination(icon=ft.icons.SETTINGS_ROUNDED, label=tabs_config[3]['title']),
@@ -673,16 +772,25 @@ def main(page: ft.Page):
 
     login_col = ft.Column(
         controls=[
-            ft.Container(ft.Image(src="logo.png",
-                                  fit=ft.ImageFit.CONTAIN,
-                                  height=200,
-                                  error_content=ft.ProgressRing()
-                                  ),
-                         ),
+            ft.Container(
+                ft.Lottie(
+                    src='https://lottie.host/bbf984e1-7cba-417a-8a6f-472105c726b0/joNPBJ5N73.json',
+                    # on_error=lambda _: open_snackbar("3453454")
+                    background_loading=True,
+                    scale=0.2
+                ),
+                margin=ft.margin.all(-460)
+            ),
+            # ft.Container(ft.Image(src="logo.png",
+            #                       fit=ft.ImageFit.CONTAIN,
+            #                       height=200,
+            #                       error_content=ft.ProgressRing()
+            #                       ),
+            #              ),
             login_field,
             password_field,
             button_login,
-            button_update,
+            # button_update,
             # ft.Text("login: admin | password: admin")
         ],
         alignment=ft.MainAxisAlignment.CENTER,

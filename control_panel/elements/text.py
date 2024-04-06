@@ -49,7 +49,7 @@ labels = {
     'statuses': {
         'topic_free': "Свободна",
         'topic_busy': "Занята",
-        'jury_waiting': "Ожидание регистрации",
+        'jury_waiting': "Ожидание",
         'jury_registered': "Зарегистрирован",
         'video_waiting': "Открыть видео",
         'video_uploaded': "Открыть видео"

@@ -9,6 +9,7 @@ from mysql.connector import connect, Error as sql_error
 from functions import load_config_file
 from elements.screens import screens
 from elements.tabs import tabs_config
+from elements.errors_targets import targets
 
 import elements.global_vars
 from elements.text import labels
@@ -56,10 +57,27 @@ def main(page: ft.Page):
     # page.window_width = 720
     # page.window_height = 1280
 
+    def open_loading_snackbar(text: str):
+        content = ft.Row(
+            [
+                ft.ProgressRing(color=ft.colors.BLACK, scale=0.8),
+                ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_500)
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            expand=True
+        )
+        sb = ft.SnackBar(
+            content=content,
+            duration=1000
+        )
+        page.snack_bar = sb
+        sb.open = True
+        page.update()
+
     def open_snackbar(text: str, bg_color=None, text_color=None):
         # Оповещение в нижней части экрана
 
-        content = ft.Text(text, size=18)
+        content = ft.Text(text, size=18, font_family="Geologica", weight=ft.FontWeight.W_500)
         sb = ft.SnackBar(
             content=content,
             duration=1000
@@ -76,7 +94,11 @@ def main(page: ft.Page):
         page.update()
 
     def get_from_db(request_text: str, many=False):
-        cur.execute(request_text)
+        try:
+            cur.execute(request_text)
+        except sql_error as e:
+            elements.global_vars.ERROR_TEXT = str(e)
+            elements.global_vars.DB_FAIL = True
         if many:
             return cur.fetchall()
         else:
@@ -98,7 +120,7 @@ def main(page: ft.Page):
         if len(groups_list) > 0:
             for group in groups_list:
 
-                topic_info = get_from_db(f"SELECT * FROM topics WHERE topic_id = {group['topic_id']}")
+                topic_info = get_from_db(f"SELECT * FROM topic WHERE topic_id = {group['topic_id']}")
 
                 participants_info = get_from_db(
                     f"SELECT * FROM participants WHERE group_id = {group['group_id']}",
@@ -119,13 +141,13 @@ def main(page: ft.Page):
                         content=ft.Column(
                             controls=[
                                 ft.ListTile(
-                                    title=ft.Text(f"{group['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    title=ft.Text(f"{group['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
                                     subtitle=ft.Text(f"#{topic_info['topic_id']} {topic_info['description']}", size=18),
                                 ),
                                 ft.Container(
                                     ft.ListTile(
-                                        title=ft.Text("Оценки", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
-                                        subtitle=ft.Text(f"не выставлены", size=18),
+                                        title=ft.Text(labels['elements']['marks_title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
+                                        subtitle=ft.Text(labels['elements']['no_marks_subtitle'], size=18),
                                     ),
                                     margin=ft.margin.only(top=-20),
                                     visible=not statuses[group['video_status']]['flag']
@@ -133,9 +155,11 @@ def main(page: ft.Page):
                                 ft.ResponsiveRow(
                                     [
                                         ft.ElevatedButton(
-                                            text="Участники",
+                                            text=labels['buttons']['group_part'],
                                             icon=ft.icons.GROUPS_ROUNDED,
                                             bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                            data=participants_info,
+                                            on_click=show_part_list,
                                             col={"lg": 1}
                                         ),
                                         ft.ElevatedButton(
@@ -143,26 +167,29 @@ def main(page: ft.Page):
                                             icon=ft.icons.ONDEMAND_VIDEO_ROUNDED,
                                             disabled=statuses[group['video_status']]['flag'],
                                             bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                            url=group['video_link'],
                                             col={"lg": 1}
                                         ),
 
                                     ],
                                     columns=2,
                                     alignment=ft.MainAxisAlignment.END,
-                                    # scroll=ft.ScrollMode.HIDDEN,
                                 ),
                             ],
-                            # horizontal_alignment=ft.CrossAxisAlignment.CENTER
                         ),
                         padding=15
                     ),
                     col={"lg": 1},
-                    elevation=10
+                    elevation=10,
+                    data=group['group_id']
                 )
                 rr.controls.append(group_card)
             page.add(rr)
         else:
-            set_no_data()
+            if elements.global_vars.DB_FAIL:
+                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+            else:
+                show_error('empty_list', labels['errors']['empty_list'])
         page.update()
 
     def get_topics():
@@ -181,7 +208,7 @@ def main(page: ft.Page):
 
         rr = ft.ResponsiveRow(columns=3)
 
-        topics_list = get_from_db(f"SELECT * from topics", many=True)
+        topics_list = get_from_db(f"SELECT * from topic", many=True)
         print(len(topics_list))
         if len(topics_list) > 0:
             busy_count = 0
@@ -193,13 +220,13 @@ def main(page: ft.Page):
                         content=ft.Column(
                             controls=[
                                 ft.ListTile(
-                                    title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
                                     subtitle=ft.Row(
-                                            [
-                                                statuses[topic['status']]['icon'],
-                                                ft.Text(statuses[topic['status']]['title'], size=20)
-                                            ]
-                                        ),
+                                        [
+                                            statuses[topic['status']]['icon'],
+                                            ft.Text(statuses[topic['status']]['title'], size=20)
+                                        ]
+                                    ),
                                     expand=True
                                 ),
                                 # ft.Column(
@@ -218,11 +245,15 @@ def main(page: ft.Page):
                                         ft.ElevatedButton(
                                             text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
                                             visible=statuses[topic['status']]['flag'],
+                                            data=topic,
+                                            on_click=goto_edit_topic,
                                             bgcolor=ft.colors.PRIMARY_CONTAINER
                                         ),
                                         ft.ElevatedButton(
                                             text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
                                             visible=statuses[topic['status']]['flag'],
+                                            on_long_press=delete_element,
+                                            data=f"topic_{topic['topic_id']}",
                                             bgcolor=ft.colors.RED
                                         ),
                                         ft.ElevatedButton(
@@ -240,11 +271,12 @@ def main(page: ft.Page):
                     elevation=10,
                     height=200,
                     col={"lg": 1},
+                    data=topic['topic_id']
                 )
                 rr.controls.append(topic_card)
             page.add(rr)
         else:
-            set_no_data()
+            show_error('empty_list', labels['errors']['empty_list'])
         page.update()
 
     def get_jury():
@@ -269,11 +301,11 @@ def main(page: ft.Page):
                         content=ft.Column(
                             controls=[
                                 ft.ListTile(
-                                    title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_900),
+                                    title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
                                     subtitle=ft.Row([
-                                            statuses[jury['status']]['icon'],
-                                            ft.Text(f"{statuses[jury['status']]['title']}", size=18, weight=ft.FontWeight.W_400)
-                                        ])
+                                        statuses[jury['status']]['icon'],
+                                        ft.Text(f"{statuses[jury['status']]['title']}", size=18, weight=ft.FontWeight.W_400)
+                                    ])
                                 ),
                                 ft.Row(
                                     # scroll=ft.ScrollMode.ADAPTIVE,
@@ -282,7 +314,8 @@ def main(page: ft.Page):
                                             text=labels['buttons']['delete'],
                                             icon=ft.icons.DELETE_ROUNDED,
                                             bgcolor=ft.colors.RED,
-                                            on_click=None
+                                            data=f"jury_{jury['jury_id']}",
+                                            on_long_press=delete_element
                                         ),
                                         ft.ElevatedButton(
                                             text=labels['buttons']['link'], icon=ft.icons.LINK_ROUNDED,
@@ -300,37 +333,92 @@ def main(page: ft.Page):
                     ),
                     elevation=10,
                     # height=200,
-                    col={"lg": 1}
+                    col={"lg": 1},
+                    data=jury['jury_id']
                 )
                 rr.controls.append(jury_card)
             page.add(rr)
         else:
-            set_no_data()
+            show_error('empty_list', labels['errors']['empty_list'])
 
-    def set_no_data():
+    def show_error(target: str, description: str):
         page.scroll = None
+        page.clean()
         page.add(
-            ft.Container(
-                ft.Column(
-                    [
-                        ft.Container(ft.Image(src="no_data.png",
-                                              fit=ft.ImageFit.CONTAIN,
-                                              height=200,
-                                              error_content=ft.ProgressRing()
-                                              ),
-                                     ),
-                        title_text(labels['elements']['no_data'])
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                ),
-                expand=True
+            ft.Column(
+                controls=[
+                    ft.Card(
+                        ft.Container(
+                            ft.Column(
+                                [
+                                    ft.Container(ft.Image(
+                                        src=targets[target]['image'],
+                                        fit=ft.ImageFit.CONTAIN,
+                                        height=120,
+                                        error_content=ft.ProgressRing()
+                                    ),
+                                    ),
+                                    ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
+                                    ft.Text(description, size=18, font_family="Geologica")
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                            ),
+                            expand=True,
+                            padding=15
+                        ),
+                        elevation=10,
+                        width=800,
+                    )
+                ],
+                expand=True,
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )
         )
 
     def get_jury_link(e: ft.ControlEvent):
         page.set_clipboard(labels['elements']['bot_link'].format(e.control.data))
         open_snackbar(labels['snack_bars']['link_copied'])
+
+    def goto_edit_topic(e: ft.ControlEvent):
+        topic = e.control.data
+        topic_description.value = topic['description']
+        edit_topic_dialog.actions[-1].data = topic['topic_id']
+
+        open_dialog(edit_topic_dialog)
+
+    def show_part_list(e: ft.ControlEvent):
+        statuses = {
+            'captain': {
+                'icon': ft.Icon(ft.icons.HIKING_SHARP),
+                'title': "Капитан"
+            },
+            'part': {
+                'icon': ft.Icon(ft.icons.ACCOUNT_CIRCLE_ROUNDED),
+                'title': "Участник"
+            },
+        }
+        part_list = e.control.data
+        participants_dialog.content = ft.Column(
+            width=500,
+            height=300,
+            scroll=ft.ScrollMode.ADAPTIVE
+        )
+        participants_dialog.data = part_list
+        for index, part in enumerate(part_list):
+            participants_dialog.content.controls.append(
+                ft.Container(
+                    ft.ListTile(
+                        leading=statuses[part['status']]['icon'],
+                        title=ft.Text(f"{part['name']}", size=20),
+                        # title=ft.TextButton(part['name'], on_click=lambda _: page.set_clipboard(part)),
+                        subtitle=ft.Text(part['study_group'], size=18)
+                    ),
+                    margin=ft.margin.only(top=-20)
+                )
+            )
+        open_dialog(participants_dialog)
 
     def change_navbar_tab(e):
         global current_tab_index
@@ -348,9 +436,8 @@ def main(page: ft.Page):
         page.floating_action_button = None
 
         if tab_index in [0, 1, 2]:
-            open_dialog(loading_dialog)
+            open_loading_snackbar("Загружаем")
             time.sleep(1)
-            pass
 
         if tab['fab'] is not None:
             page.floating_action_button = ft.FloatingActionButton(
@@ -365,8 +452,6 @@ def main(page: ft.Page):
             get_groups()
         elif tab_index == 2:
             get_jury()
-
-        close_dialog(loading_dialog)
 
         page.update()
 
@@ -385,15 +470,15 @@ def main(page: ft.Page):
         if target == "login":
             page.scroll = None
             page.appbar = None
-            page.add(ft.Container(login_col, expand=True), )#footer)
+            page.add(ft.Container(login_col, expand=True), )  # footer)
 
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
             change_navbar_tab(0)
 
-        elif target == "error":
-            page.add(ft.Container(error_col, expand=True), )#footer)
+        # elif target == "error":
+        #     page.add(ft.Container(error_col, expand=True), )  # footer)
 
         page.update()
 
@@ -409,12 +494,28 @@ def main(page: ft.Page):
         bgcolor=ft.colors.SURFACE_VARIANT
     )
 
+    def validate_description_field():
+        if topic_description.value:
+            edit_topic_dialog.actions[-1].disabled = False
+        else:
+            edit_topic_dialog.actions[-1].disabled = True
+        page.update()
+
+    def copy_part():
+        text = ""
+        for index, part in enumerate(participants_dialog.data):
+            text += f"{index + 1}. {part['name']} ({part['study_group']})\n"
+
+        page.set_clipboard(text)
+        close_dialog(participants_dialog)
+        open_snackbar(labels['snack_bars']['group_list_copied'])
+
     def copy_error_text(e: ft.ControlEvent):
         page.set_clipboard(elements.global_vars.ERROR_TEXT)
         open_snackbar(labels['snack_bars']['error_text_copied'])
 
     def title_text(text: str):
-        return ft.Text(text, size=30, font_family="Geologica", weight=ft.FontWeight.W_900,
+        return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_900,
                        text_align=ft.TextAlign.CENTER)
 
     def update():
@@ -451,6 +552,78 @@ def main(page: ft.Page):
         except Exception as e:
             return e
 
+    def delete_element(e: ft.ControlEvent):
+        data = e.control.data.split("_")
+        get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
+        for index, card in enumerate(page.controls[-1].controls):
+            if card.data == int(data[1]):
+                page.controls[-1].controls.pop(index)
+                if len(page.controls[-1].controls) == 0:
+                    show_error('empty_list', labels['errors']['empty_list'])
+                page.update()
+                break
+        open_snackbar(labels['snack_bars']['element_deleted'])
+
+    def update_topic(e: ft.ControlEvent):
+        get_from_db(f"UPDATE topic SET description = '{topic_description.value}' WHERE topic_id = {e.control.data}")
+        close_dialog(edit_topic_dialog)
+        open_snackbar(labels['snack_bars']['data_edited'])
+
+    participants_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Row(
+            [
+                ft.Container(ft.Text(labels['elements']['part_list'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700), expand=True),
+                ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(participants_dialog))
+            ]
+        ),
+        content=ft.Column(
+            height=300,
+            width=600
+        ),
+        actions_alignment=ft.MainAxisAlignment.END,
+        actions=[
+            ft.ElevatedButton(
+                text=labels['buttons']['copy'],
+                icon=ft.icons.COPY_ROUNDED,
+                on_click=lambda _: copy_part()
+            )
+        ]
+    )
+
+    topic_description = ft.TextField(
+        prefix_icon=ft.icons.TEXT_FIELDS_SHARP,
+        label="Название",
+        hint_text="Введите название темы",
+        on_change=lambda _: validate_description_field(),
+    )
+
+    edit_topic_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Row(
+            [
+                ft.Container(ft.Text(labels['elements']['edit_topic_title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700), expand=True),
+                ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(edit_topic_dialog))
+            ]
+        ),
+        content=ft.Column(
+            controls=[
+                topic_description
+            ],
+            height=60,
+            width=700
+        ),
+        actions_alignment=ft.MainAxisAlignment.END,
+        actions=[
+            ft.ElevatedButton(
+                text=labels['buttons']['save'],
+                icon=ft.icons.SAVE_ROUNDED,
+                on_click=update_topic
+            )
+        ]
+
+    )
+
     loading_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text(),
@@ -460,8 +633,8 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             controls=[
-                ft.ProgressRing(scale=1.5),
-                ft.Container(ft.Text(labels['elements']['loading'], size=20), margin=ft.margin.only(top=20))
+                ft.ProgressRing(),
+                ft.Container(ft.Text(labels['elements']['loading'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500), margin=ft.margin.only())
             ]
         )
     )
@@ -510,31 +683,68 @@ def main(page: ft.Page):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
 
-    error_text = ft.Text("", size=18, text_align=ft.TextAlign.START)
+    error_text = ""
 
-    error_col = ft.Column(
-        controls=[
-            ft.Card(
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            title_text(labels['elements']['db_error_title']),
-                            error_text,
-                            ft.ElevatedButton(
-                                text=labels['buttons']['copy_error_text'],
-                                icon=ft.icons.COPY_ROUNDED,
-                                on_click=copy_error_text
-                            )
-                        ]
-                    ),
-                    padding=15
-                ),
-                elevation=15
-            ),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER
-    )
+    # error_col = ft.Column(
+    #     controls=[
+    #         ft.Card(
+    #             ft.Container(
+    #                 ft.Column(
+    #                     [
+    #                         ft.Container(ft.Image(src="db_error.png",
+    #                                               fit=ft.ImageFit.CONTAIN,
+    #                                               height=120,
+    #                                               error_content=ft.ProgressRing()
+    #                                               ),
+    #                                      ),
+    #                         ft.Text("Ошибка базы данных", size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
+    #                         error_text,
+    #                         ft.ElevatedButton(
+    #                             text=labels['buttons']['copy_error_text'],
+    #                             icon=ft.icons.COPY_ROUNDED,
+    #                             on_click=copy_error_text
+    #                         )
+    #                         # title_text(labels['elements']['no_data'])
+    #                     ],
+    #                     alignment=ft.MainAxisAlignment.CENTER,
+    #                     horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    #                 ),
+    #                 expand=True,
+    #                 padding=15
+    #             ),
+    #             elevation=10,
+    #             width=800,
+    #             # height=200
+    #         )
+    #     ],
+    #     expand=True,
+    #     alignment=ft.MainAxisAlignment.CENTER,
+    #     horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    # )
+
+    # error_col = ft.Column(
+    #     controls=[
+    #         ft.Card(
+    #             ft.Container(
+    #                 content=ft.Column(
+    #                     controls=[
+    #                         title_text(labels['elements']['db_error_title']),
+    #                         error_text,
+    #                         ft.ElevatedButton(
+    #                             text=labels['buttons']['copy_error_text'],
+    #                             icon=ft.icons.COPY_ROUNDED,
+    #                             on_click=copy_error_text
+    #                         )
+    #                     ]
+    #                 ),
+    #                 padding=15
+    #             ),
+    #             elevation=15
+    #         ),
+    #     ],
+    #     alignment=ft.MainAxisAlignment.CENTER,
+    #     horizontal_alignment=ft.CrossAxisAlignment.CENTER
+    # )
     vertext = ft.Text(
         value=None,
         text_align=ft.TextAlign.START,
@@ -550,8 +760,7 @@ def main(page: ft.Page):
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if elements.global_vars.DB_FAIL:
-        error_text.value = labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT)
-        change_screen('error')
+        show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT))
     else:
         change_screen("login")
     page.update()
@@ -563,8 +772,8 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = create_db_connection()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main, use_color_emoji=True, name='', port=8502)
+        ft.app(assets_dir='assets', target=main, use_color_emoji=True, upload_dir='assets/uploads')
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))
-        ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets', use_color_emoji=True)
+        ft.app(name=flet_path, target=main, view=None, port=flet_port, assets_dir='assets', use_color_emoji=True, upload_dir='assets/uploads')

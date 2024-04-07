@@ -57,17 +57,8 @@ def main(page: ft.Page):
     )
 
     page.fonts = {
-        "Montserrat": "fonts/Montserrat-SemiBold.ttf",
         "Geologica": "fonts/Geologica.ttf",
-        # "Geologica-Black": "fonts/Geologica-black.ttf"
     }
-
-    # page.window_width = 720
-    # page.window_height = 1280
-
-    def on_dialog_result(e: ft.FilePickerResultEvent):
-        print("Selected files:", e.files)
-        save_uploaded_file()
 
     def save_new_topic(e: ft.ControlEvent):
         topic = new_topic_field.value.strip()
@@ -75,28 +66,7 @@ def main(page: ft.Page):
         new_topic_field.value = ''
         btn_add_topic.disabled = True
 
-        open_snackbar("Тема добавлена")
-
-    def save_uploaded_file():
-        upload_list = []
-        if filepicker.result is not None and filepicker.result.files is not None:
-            file = filepicker.result.files[-1]
-            open_loading_snackbar(f"Загружаем {file.name}")
-            upload_list.append(
-                ft.FilePickerUploadFile(
-                    file.name,
-                    upload_url=page.get_upload_url(file.name, 600),
-                )
-            )
-            print("OK")
-            print(filepicker.upload(upload_list))
-            print("OK")
-            time.sleep(3)
-            print("OK3")
-            upload_topic_from_file(file.name)
-
-    filepicker = ft.FilePicker(on_result=on_dialog_result)
-    page.overlay.append(filepicker)
+        open_snackbar(labels['snack_bars']['topic_added'])
 
     def open_loading_snackbar(text: str):
         content = ft.Row(
@@ -145,15 +115,6 @@ def main(page: ft.Page):
         else:
             return cur.fetchone()
 
-    def upload_topic_from_file(file: str):
-        with open(os.path.join('assets/uploads', file)) as file:
-            topics_list = [topic.strip() for topic in file.readlines()]
-        for topic in topics_list:
-            get_from_db(f"INSERT INTO topic (description) VALUES ('{topic}')")
-        change_screen('main')
-        change_navbar_tab(0)
-        open_snackbar("Темы загружены")
-
     def get_stats():
         elements.global_vars.GROUP_COUNT = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
         elements.global_vars.PART_COUNT = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
@@ -175,17 +136,14 @@ def main(page: ft.Page):
                         statistic_tile(
                             title="Количество групп",
                             descr=f"{elements.global_vars.GROUP_COUNT}",
-                            # icon=ft.Icon(ft.icons.GROUPS_ROUNDED),
                         ),
                         statistic_tile(
                             title="Количество участников",
                             descr=f"{elements.global_vars.PART_COUNT}",
-                            # icon=ft.Icon(ft.icons.ACCOUNT_CIRCLE, size=30),
                         ),
                         statistic_tile(
                             title="Загружено видео",
                             descr=f"{elements.global_vars.VIDEOS} из {elements.global_vars.GROUP_COUNT}",
-                            # icon=ft.Icon(ft.icons.VIDEO_CAMERA_FRONT_ROUNDED, size=30),
                         )
                     ]
                 ),
@@ -320,8 +278,7 @@ def main(page: ft.Page):
                                             statuses[topic['status']]['icon'],
                                             ft.Text(statuses[topic['status']]['title'], size=18)
                                         ]
-                                    ),
-                                    # expand=True
+                                    )
                                 ),
                                 ft.Row(
                                     controls=[
@@ -338,12 +295,7 @@ def main(page: ft.Page):
                                             on_click=confirm_delete,
                                             data=f"delete_topic_{topic['topic_id']}",
                                             bgcolor=ft.colors.RED
-                                        ),
-                                        # ft.ElevatedButton(
-                                        #     text=labels['buttons']['group_info'], icon=ft.icons.FILE_OPEN_ROUNDED,
-                                        #     visible=not statuses[topic['status']]['flag'],
-                                        #     bgcolor=ft.colors.PRIMARY_CONTAINER
-                                        # ),
+                                        )
                                     ],
                                     alignment=ft.MainAxisAlignment.END
                                 )
@@ -352,7 +304,6 @@ def main(page: ft.Page):
                         padding=15
                     ),
                     elevation=10,
-                    # height=200,
                     col={"lg": 1},
                     data=topic['topic_id']
                 )
@@ -394,7 +345,6 @@ def main(page: ft.Page):
                                     ])
                                 ),
                                 ft.Row(
-                                    # scroll=ft.ScrollMode.ADAPTIVE,
                                     controls=[
                                         ft.ElevatedButton(
                                             text=labels['buttons']['delete'],
@@ -418,7 +368,6 @@ def main(page: ft.Page):
                         padding=15
                     ),
                     elevation=10,
-                    # height=200,
                     col={"lg": 1},
                     data=jury['jury_id']
                 )
@@ -483,16 +432,16 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['data_updated'])
 
     def show_part_list(e: ft.ControlEvent):
-        statuses = {
-            'captain': {
-                'icon': ft.Icon(ft.icons.HIKING_SHARP),
-                'title': "Капитан"
-            },
-            'part': {
-                'icon': ft.Icon(ft.icons.ACCOUNT_CIRCLE_ROUNDED),
-                'title': "Участник"
-            },
-        }
+        # statuses = {
+        #     'captain': {
+        #         'icon': ft.Icon(ft.icons.HIKING_SHARP),
+        #         'title': "Капитан"
+        #     },
+        #     'part': {
+        #         'icon': ft.Icon(ft.icons.ACCOUNT_CIRCLE_ROUNDED),
+        #         'title': "Участник"
+        #     },
+        # }
         part_list = e.control.data
         participants_dialog.content = ft.Column(
             width=500,
@@ -504,9 +453,7 @@ def main(page: ft.Page):
             participants_dialog.content.controls.append(
                 ft.Container(
                     ft.ListTile(
-                        # leading=statuses[part['status']]['icon'],
                         title=ft.Text(f"{part['name']}", size=18),
-                        # title=ft.TextButton(part['name'], on_click=lambda _: page.set_clipboard(part)),
                         subtitle=ft.Text(part['study_group'], size=16)
                     ),
                     margin=ft.margin.only(top=-20)
@@ -560,28 +507,28 @@ def main(page: ft.Page):
                                 ft.Container(
                                     content=ft.Column(
                                         [
-                                            ft.Container(title_text("Удаление данных"), margin=ft.margin.only(bottom=20)),
+                                            ft.Container(title_text(labels['titles']['removing_data']), margin=ft.margin.only(bottom=20)),
                                             settings_tile(
-                                                title="Темы",
-                                                descr="Удаляются все темы, которые находятся в базе данных",
+                                                title=labels['titles']['topics'],
+                                                descr=labels['simple_text']['rem_topics_descr'],
                                                 icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
-                                                btn_text="Удалить темы",
+                                                btn_text=labels['buttos']['delete'],
                                                 btn_data='delete_manytopic',
                                                 btn_action=confirm_delete
                                             ),
                                             settings_tile(
-                                                title="Группы",
-                                                descr="Удаляются все участники, загруженные видео, очищается список групп, в том числе рейтинг",
+                                                title=labels['titles']['groups'],
+                                                descr=labels['simple_text']['rem_groups_descr'],
                                                 icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
-                                                btn_text="Удалить группы",
+                                                btn_text=labels['buttos']['delete'],
                                                 btn_data='delete_manysgroups',
                                                 btn_action=confirm_delete
                                             ),
                                             settings_tile(
-                                                title="Жюри",
-                                                descr="Удаляется всё жюри с потерей доступа к оцениваю работ",
+                                                title=labels['titles']['jury'],
+                                                descr=labels['simple_text']['rem_jury_descr'],
                                                 icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
-                                                btn_text="Удалить жюри",
+                                                btn_text=labels['buttos']['delete'],
                                                 btn_data='delete_manyjury',
                                                 btn_action=confirm_delete
                                             )
@@ -591,7 +538,6 @@ def main(page: ft.Page):
                                 ),
                                 elevation=10,
                                 width=450,
-                                # height=500,
                                 col={"lg": 1}
                             ),
 
@@ -599,28 +545,28 @@ def main(page: ft.Page):
                                 ft.Container(
                                     content=ft.Column(
                                         [
-                                            ft.Container(title_text("Авторизация"), margin=ft.margin.only(bottom=20)),
+                                            ft.Container(title_text(labels['titles']['auth']), margin=ft.margin.only(bottom=20)),
                                             settings_tile(
-                                                title="OAuth-токен",
-                                                descr="Токен для связи бота с Яндекс.Диском",
+                                                title=labels['statuses']['oauth_token'],
+                                                descr=labels['simple_text']['oauth_token_descr'],
                                                 icon=ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30),
-                                                btn_text="Изменить токен",
+                                                btn_text=labels['buttons']['edit_token'],
                                                 btn_data='OAUTH_TOKEN',
                                                 btn_action=get_update_params
                                             ),
                                             settings_tile(
-                                                title="Bot-токен",
-                                                descr="Токен для связи с Telegram API",
+                                                title=labels['statuses']['bot_token'],
+                                                descr=labels['simple_text']['bot_token_descr'],
                                                 icon=ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30),
-                                                btn_text="Изменить токен",
+                                                btn_text=labels['buttons']['edit_token'],
                                                 btn_data='BOT_TOKEN',
                                                 btn_action=get_update_params
                                             ),
                                             settings_tile(
-                                                title="Пароль",
-                                                descr="Пароль для входа в панель управления и подтверждения действий",
+                                                title=labels['statuses']['password'],
+                                                descr=labels['simple_text']['password_descr'],
                                                 icon=ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30),
-                                                btn_text="Изменить пароль",
+                                                btn_text=labels['buttons']['edit_password'],
                                                 btn_data='PASSWORD',
                                                 btn_action=get_update_params
                                             )
@@ -637,9 +583,7 @@ def main(page: ft.Page):
                         columns=3,
                         alignment=ft.MainAxisAlignment.START,
                         width=1200
-                        # horizontal_alignment=ft.CrossAxisAlignment.START
-                    ),
-                    # expand=True
+                    )
                 )
             )
             get_stats()
@@ -649,15 +593,10 @@ def main(page: ft.Page):
     def statistic_tile(title: str, descr: str):
         tile = ft.ListTile(
             title=ft.Row(
-                [
-                    # icon,
-                    ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)
-                ]
+                [ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)]
             ),
             subtitle=ft.Column(
-                [
-                    ft.Text(descr, size=20, weight=ft.FontWeight.W_600),
-                ]
+                [ft.Text(descr, size=20, weight=ft.FontWeight.W_600)]
             ),
         )
         return ft.Container(tile, margin=ft.margin.only(top=-15))
@@ -702,7 +641,7 @@ def main(page: ft.Page):
         password=True,
         can_reveal_password=False,
         border_width=3,
-        hint_text='Введите значение параметра',
+        hint_text=labels['fields_hint']['param'],
         on_change=validate_param
     )
 
@@ -715,7 +654,7 @@ def main(page: ft.Page):
         page.update()
 
     def check_param(e: ft.ControlEvent):
-        edit_params_dialog.actions[0].text = "Проверяем"
+        edit_params_dialog.actions[0].text = labels['buttons']['checking']
         edit_params_dialog.actions[0].disabled = True
         page.update()
         param = e.control.data
@@ -742,7 +681,7 @@ def main(page: ft.Page):
         param_field.helper_text = f"Код ответа: {response.status_code}"
 
         edit_params_dialog.actions[0].disabled = False
-        edit_params_dialog.actions[0].text = "Проверить"
+        edit_params_dialog.actions[0].text = labels['buttons']['check']
 
         page.update()
         time.sleep(3)
@@ -782,20 +721,19 @@ def main(page: ft.Page):
         param = e.control.data
         params = {
             'OAUTH_TOKEN': {
-                'label': "OAuth-токен",
+                'label': labels['statuses']['oauth_token'],
                 'icon': ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30)
             },
             'BOT_TOKEN': {
-                'label': "Bot-токен",
+                'label': labels['statuses']['bot_token'],
                 'icon': ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30)
             },
             'PASSWORD': {
-                'label': "Пароль",
+                'label': labels['statuses']['password'],
                 'icon': ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30)
             }
         }
         param_field.label = params[param]['label']
-        # param_field.value = os.getenv(param)
         edit_params_dialog.actions[-1].data = param
         edit_params_dialog.actions[0].data = param
         if param in ['OAUTH_TOKEN', 'BOT_TOKEN']:
@@ -821,7 +759,7 @@ def main(page: ft.Page):
         if target == "login":
             page.scroll = None
             page.appbar = None
-            page.add(ft.Container(login_col, expand=True), )  # footer)
+            page.add(ft.Container(login_col, expand=True), )
 
         elif target == "main":
             page.appbar = appbar
@@ -836,9 +774,6 @@ def main(page: ft.Page):
             page.navigation_bar = navbar
             elements.global_vars.ACCESS_CODE = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
             page.add(import_topics_col)
-
-        # elif target == "error":
-        #     page.add(ft.Container(error_col, expand=True), )  # footer)
 
         page.update()
 
@@ -870,10 +805,6 @@ def main(page: ft.Page):
         close_dialog(participants_dialog)
         open_snackbar(labels['snack_bars']['group_list_copied'])
 
-    def copy_error_text(e: ft.ControlEvent):
-        page.set_clipboard(elements.global_vars.ERROR_TEXT)
-        open_snackbar(labels['snack_bars']['error_text_copied'])
-
     def copy_accesscode(e: ft.ControlEvent):
         page.set_clipboard(elements.global_vars.ACCESS_CODE)
         open_snackbar(labels['snack_bars']['accesscode_copied'])
@@ -881,13 +812,6 @@ def main(page: ft.Page):
     def title_text(text: str):
         return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_700,
                        text_align=ft.TextAlign.CENTER)
-
-    def update():
-        if platform.system() == 'Windows':
-            open_snackbar(labels['snack_bars']['action_unavaliable'])
-        else:
-            open_dialog(loading_dialog)
-            os.system("/root/controlupdate.sh")
 
     def login():
         auth_data = load_config_file("config.json")['auth']
@@ -984,14 +908,14 @@ def main(page: ft.Page):
 
     topic_description = ft.TextField(
         prefix_icon=ft.icons.TEXT_FIELDS_SHARP,
-        label="Название",
-        hint_text="Введите название темы",
+        label=labels['fields']['topic_description'],
+        hint_text=labels['fields_hint']['topic_description'],
         on_change=lambda _: validate_description_field(),
     )
 
     confirm_field = ft.TextField(
-        label='Код подтверждения',
-        hint_text='Введите код подтверждения',
+        label=labels['fields']['confirm_code'],
+        hint_text=labels['fields_hint']['confirm_code'],
         text_align=ft.TextAlign.CENTER,
         border_width=3
     )
@@ -1000,13 +924,13 @@ def main(page: ft.Page):
         modal=True,
         title=ft.Row(
             [
-                ft.Container(ft.Text("Подтверждение действия", size=20, font_family="Geologica", weight=ft.FontWeight.W_700), expand=True),
+                ft.Container(title_text(labels['titles']['confirm_action']), expand=True),
                 ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(confirmation_dialog))
             ]
         ),
         content=ft.Column(
             [
-                ft.Text(f"Чтобы подтвердить своё действие, введите в окно {str(datetime.datetime.now().date()).replace('-', '')}", size=18),
+                ft.Text(labels['simple_text']['confirm_action'].format(str(datetime.datetime.now().date()).replace('-', '')), size=18),
                 confirm_field
             ],
             width=350,
@@ -1014,7 +938,7 @@ def main(page: ft.Page):
         ),
         actions=[
             ft.ElevatedButton(
-                text="Подтвердить",
+                text=labels['buttons']['accept'],
                 icon=ft.icons.CHECK_ROUNDED,
                 on_click=check_confirm
             )
@@ -1121,7 +1045,6 @@ def main(page: ft.Page):
                                      disabled=True, height=50,
                                      icon=ft.icons.KEYBOARD_ARROW_RIGHT_ROUNDED,
                                      on_long_press=None)
-    button_update = ft.OutlinedButton(labels['buttons']['update_project'], width=250, on_click=lambda _: update(), height=50)
 
     login_col = ft.Column(
         controls=[
@@ -1142,17 +1065,15 @@ def main(page: ft.Page):
                          ),
             login_field,
             password_field,
-            button_login,
-            # button_update,
-            # ft.Text("login: admin | password: admin")
+            button_login
         ],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER
     )
 
     jury_name_field = ft.TextField(
-        label="ФИО",
-        hint_text="Иванов Иван Иванович",
+        label=labels['fields']['jury'],
+        hint_text=labels['fields_hint']['jury'],
         on_change=validate_jury_field
     )
 
@@ -1183,7 +1104,7 @@ def main(page: ft.Page):
     )
 
     btn_add_topic = ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True, on_click=save_new_topic)
-    new_topic_field = ft.TextField(label="Тема", hint_text="Введите описание темы", on_change=validate_topic_name)
+    new_topic_field = ft.TextField(label=labels['fields']['new_topic'], hint_text=labels['fields_hint']['new_topic'], on_change=validate_topic_name)
 
     import_topics_col = ft.Container(
         ft.Column(
@@ -1192,7 +1113,7 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             [
-                                title_text('Одиночное добавление'),
+                                title_text(labels['titles']['single_add']),
                                 new_topic_field,
                                 ft.Row([btn_add_topic], alignment=ft.MainAxisAlignment.END)
                             ],
@@ -1206,8 +1127,8 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             [
-                                title_text('Массовое добавление'),
-                                ft.Text(f"Скопируйте код подключения, после чего откройте форму и вставьте список тем, не забудьте вставить скопированный код подключения", size=18),
+                                title_text(labels['titles']['multi_add']),
+                                ft.Text(labels['simple_text']['upload_topics'], size=18),
                                 ft.Row([
                                     ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode, data=elements.global_vars.ACCESS_CODE)
                                 ],
@@ -1229,20 +1150,13 @@ def main(page: ft.Page):
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
-        ),
-        # expand=True,
+        )
     )
 
     vertext = ft.Text(
         value=None,
         text_align=ft.TextAlign.START,
         size=16
-    )
-    footer = ft.Row(
-        controls=[
-            vertext
-        ],
-        alignment=ft.MainAxisAlignment.START
     )
 
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())

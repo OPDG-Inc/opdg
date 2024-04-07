@@ -8,6 +8,7 @@ import time
 import uuid
 
 import flet as ft
+import flet_core
 import requests
 from mysql.connector import connect, Error as sql_error
 from dotenv import load_dotenv
@@ -956,6 +957,126 @@ def main(page: ft.Page):
         close_dialog(edit_topic_dialog)
         open_snackbar(labels['snack_bars']['data_edited'])
 
+    def register(e):
+        sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
+        cur.execute(sql_query, (group_name_field.value,))
+
+        sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
+        cur.execute(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain'))
+
+        cur.execute(f"SELECT group_id FROM sgroups WHERE name = '{group_name_field.value}'")
+        group_id = cur.fetchone()['group_id']
+
+        cur.execute(f"UPDATE participants SET group_id = {group_id} WHERE telegram_id = {user_id}")
+
+        cur.execute(f"SELECT participant_id FROM participants WHERE group_id = {group_id} and status = 'captain'")
+        captain_id = cur.fetchone()['participant_id']
+
+        cur.execute(f"UPDATE sgroups SET captain_id = {captain_id} WHERE group_id = {group_id}")
+
+        sql_query = "INSERT INTO participants (group_id, telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s, %s)"
+
+        participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
+        for i in range(0, len(participants), 2):
+            part = {}
+            part['name'] = participants[i].value
+            part['group'] = participants[i + 1].value
+            cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
+
+        cur.execute(f"DELETE FROM registration WHERE user_id = '{user_id}'")
+        open_dialog(confirmation_registration_dialog)
+
+    def validate_registrationfields(e):
+        fl = True
+        if all([
+            group_name_field.value,
+            captain_name_field.value,
+            captain_group_field.value
+        ]):
+            fl = False
+            for el in parts.controls:
+                if type(el) == flet_core.textfield.TextField:
+                    if el.value == '':
+                        fl = True
+                        break
+            if fl:
+                btn_register.disabled = True
+            else:
+                btn_register.disabled = False
+        else:
+            btn_register.disabled = True
+        page.update()
+
+    def add_part(e: ft.ControlEvent):
+        parts.controls.append(ft.Divider())
+        parts.controls.append(
+            ft.TextField(label='ФИО', hint_text='Иванов Иван Иванович', on_change=validate_registrationfields)
+        )
+        parts.controls.append(
+            ft.TextField(label='Номер группы', hint_text='5130904/20002', on_change=validate_registrationfields)
+        )
+        btn_rem_part.disabled = False
+        btn_register.disabled = True
+        if len(parts.controls) == 15:
+            btn_add_part.disabled = True
+        page.update()
+
+    def rem_part(e: ft.ControlEvent):
+        for _ in range(3):
+            parts.controls.pop()
+        btn_add_part.disabled = False
+        if len(parts.controls) == 0:
+            btn_rem_part.disabled = True
+        validate_registrationfields('1')
+        page.update()
+
+    def open_dialog(dialog: ft.AlertDialog):
+        page.dialog = dialog
+        dialog.open = True
+        page.update()
+
+    group_name_field = ft.TextField(label='Название команды', hint_text='Введи название команды', on_change=validate_registrationfields)
+
+    captain_name_field = ft.TextField(label='ФИО', hint_text='Иванов Иван Иванович', on_change=validate_registrationfields)
+    captain_group_field = ft.TextField(label='Номер группы', hint_text='5130904/20002', on_change=validate_registrationfields)
+
+    name_field = ft.TextField(label='ФИО', hint_text='Иванов Иван Иванович', on_change=validate_registrationfields)
+    group_field = ft.TextField(label='Номер группы', hint_text='5130904/20002', on_change=validate_registrationfields)
+
+    parts = ft.Column([
+        ft.Divider(),
+        name_field,
+        group_field
+    ])
+
+    btn_add_part = ft.IconButton(ft.icons.ADD_ROUNDED, on_click=add_part, tooltip="Добавить участника")
+    btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
+    btn_register = ft.ElevatedButton("Зарегистрироваться", icon=ft.icons.APP_REGISTRATION_ROUNDED, expand=False, width=400, disabled=True, on_click=register)
+
+    def confirmed(e):
+        page.clean()
+
+    confirmation_registration_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Регистрация", size=20, weight=ft.FontWeight.W_700),
+        actions_alignment=ft.MainAxisAlignment.END,
+        actions=[
+            ft.ElevatedButton(
+                "Открыть бот",
+                icon=ft.icons.TELEGRAM_ROUNDED,
+                url="https://t.me/lrrrtm",
+                on_click=confirmed
+            ),
+        ],
+        content=ft.Column(
+            [
+                ft.Text("Твоя команда успешно зарегистрирована, ты можешь возвращаться к боту", size=18)
+            ],
+            width=350,
+            height=200
+        )
+    )
+
     participants_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Row(
@@ -1232,7 +1353,70 @@ def main(page: ft.Page):
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
     else:
-        change_screen("login")
+        route = str(page.route).split("/")[1]
+        if route == 'panel':
+            page.scroll = None
+            change_screen("login")
+
+        elif route == 'registration':
+            page.scroll = ft.ScrollMode.ADAPTIVE
+            reg_data = str(page.route).split("/")[-1].split("_")
+            if len(reg_data) == 2:
+                user_id = reg_data[0]
+                hash = reg_data[1]
+
+                cur.execute(f"SELECT * FROM registration WHERE user_id = '{user_id}' AND hash = '{hash}'")
+                is_real_user = cur.fetchall()
+                if len(is_real_user) == 1:
+                    page.controls = [
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
+                                        ft.Container(group_name_field)
+                                    ],
+                                    width=600,
+                                ),
+                                padding=15
+                            ),
+                            elevation=10
+                        ),
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
+                                        ft.Container(captain_name_field),
+                                        ft.Container(captain_group_field)
+                                    ],
+                                    width=600
+                                ),
+                                padding=15
+                            ),
+                            elevation=10
+                        ),
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Row(
+                                            [
+                                                ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
+                                                btn_add_part,
+                                                btn_rem_part
+                                            ]
+                                        ),
+                                        parts
+                                    ],
+                                    width=600,
+                                ),
+                                padding=15
+                            ),
+                            elevation=10
+                        ),
+                        ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
+                    ]
 
     page.update()
 
@@ -1243,7 +1427,7 @@ DEFAULT_FLET_PORT = 8502
 if __name__ == "__main__":
     connection, cur = create_db_connection()
     if platform.system() == 'Windows':
-        ft.app(assets_dir='assets', target=main, use_color_emoji=True, upload_dir='assets/uploads')
+        ft.app(assets_dir='assets', target=main, use_color_emoji=True, upload_dir='assets/uploads', view=ft.AppView.WEB_BROWSER)
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)
         flet_port = int(os.getenv("FLET_PORT", DEFAULT_FLET_PORT))

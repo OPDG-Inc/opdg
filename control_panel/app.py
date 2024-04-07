@@ -457,7 +457,6 @@ def main(page: ft.Page):
         disk_status.value = labels['elements']['status_loading']
         page.update()
         get_app_info()
-        open_snackbar(labels['snack_bars']['data_updated'])
 
     def show_part_list(e: ft.ControlEvent):
         # statuses = {

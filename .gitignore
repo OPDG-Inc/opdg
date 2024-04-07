@@ -81,6 +81,9 @@ __pycache__/
 # C extensions
 *.so
 
+#
+control_panel/config.json
+
 # Distribution / packaging
 .Python
 build/

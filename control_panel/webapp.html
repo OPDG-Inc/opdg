@@ -1,0 +1,66 @@
+<!-- put this file in /var/www/html -->
+
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="robots" content="noindex,nofollow">
+        <title>Супер WEBAPP</title>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Philosopher&display=swap" rel="stylesheet">
+        <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+        <script>
+
+                async function startMainProcess() 
+                {
+                        let webApp = window.Telegram.WebApp;
+                        
+                        if(webApp.initDataUnsafe.user === undefined || webApp.initDataUnsafe.start_param === undefined)
+                        {
+                                // print text on screen
+                                let mainBlock = document.getElementById("main-block");
+                                mainBlock.innerHTML = "<h1>Вы читер, так нельзя, только через телегу!!!</h1>";
+
+                        }
+                        else
+                        {
+                                // check start_param if registration - redirect, else - show main page
+                                if(webApp.initDataUnsafe.start_param === "registration")
+                                {
+                                        // redirect to https://opgd.ddns.net/registration?tid={telegram_id}
+                                        let telegramId = webApp.initDataUnsafe.user.id;
+                                        let url = "https://opgd.ddns.net/registration?tid=" + telegramId;
+                                        window.location.href = url;
+                                }
+                                else
+                                {
+                                        // show main page
+                                        let mainBlock = document.getElementById("main-block");
+                                        mainBlock.innerHTML = "<h1>Супер WEBAPP</h1><p>Добро пожаловать в супер WEBAPP!</p>";
+                                }
+
+                        }
+
+                }
+
+
+        </script>
+</head>
+
+<body>
+
+        <div id="main-block" class="centered">
+                <h1>Супер WEBAPP</h1>
+                <p>Добро пожаловать в супер WEBAPP!</p>     
+        </div>
+
+        <script>
+                startMainProcess();
+        </script>
+</body>
+
+

@@ -118,10 +118,11 @@ def main(page: ft.Page):
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     videos_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
 
-    app_ver = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
-    db_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
-    flask_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
-    bot_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
+    app_ver = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    db_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    flask_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    bot_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    disk_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
 
     def get_stats():
         group_count.value = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
@@ -153,8 +154,25 @@ def main(page: ft.Page):
         else:
             bot_status.value = labels['elements']['is_disabled']
 
+        # disk
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f"OAuth {os.getenv('OAUTH_TOKEN')}"
+        }
+        try:
+            response = requests.get(url="https://cloud-api.yandex.net/v1/disk", headers=headers)
+            if response.status_code == 200:
+                disk_status.value = labels['elements']['is_active']
+            else:
+                disk_status.value = labels['elements']['is_not_working'].format(response.status_code)
+        except requests.exceptions.ConnectionError:
+            disk_status.value = labels['elements']['is_disabled']
+
         # app ver
-        app_ver.value = str(subprocess.check_output(['/usr/bin/git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
+        if platform.system() == 'Windows':
+            app_ver.value = str(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
+        else:
+            app_ver.value = str(subprocess.check_output(['/usr/bin/git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
 
         page.update()
 
@@ -433,8 +451,10 @@ def main(page: ft.Page):
 
     def goto_info():
         db_status.value = labels['elements']['status_loading']
+        app_ver.value = labels['elements']['status_loading']
         flask_status.value = labels['elements']['status_loading']
         bot_status.value = labels['elements']['status_loading']
+        disk_status.value = labels['elements']['status_loading']
         page.update()
         get_app_info()
         open_snackbar(labels['snack_bars']['data_updated'])
@@ -627,6 +647,7 @@ def main(page: ft.Page):
                                             statistic_tile(labels['titles']['db_status'], db_status),
                                             statistic_tile(labels['titles']['flask_status'], flask_status),
                                             statistic_tile(labels['titles']['bot_status'], bot_status),
+                                            statistic_tile(labels['titles']['disk_status'], disk_status),
                                         ]
                                     ),
                                     padding=15
@@ -641,7 +662,7 @@ def main(page: ft.Page):
                     )
                 )
             )
-            get_app_info()
+            goto_info()
         close_dialog(loading_dialog)
         page.update()
 

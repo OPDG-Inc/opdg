@@ -95,6 +95,7 @@ labels = {
         'db_status': "Статус БД",
         'flask_status': "Статус Flask",
         'bot_status': "Статус бота",
+        'disk_status': "Яндекс.Диск",
     },
     'statuses': {
         'topic_free': "Свободна",

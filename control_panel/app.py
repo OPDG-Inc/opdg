@@ -12,7 +12,7 @@ import requests
 from mysql.connector import connect, Error as sql_error
 from dotenv import load_dotenv
 
-from functions import load_config_file
+from functions import load_config_file, update_config_file
 from elements.screens import screens
 from elements.tabs import tabs_config
 from elements.errors_targets import targets
@@ -767,7 +767,10 @@ def main(page: ft.Page):
 
         elif target == "import_themes":
             page.navigation_bar = navbar
-            elements.global_vars.ACCESS_CODE = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
+            access_code = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
+            config = load_config_file('config.json')
+            config['upload_topic_access_code'] = access_code
+            update_config_file(config, 'config.json')
             page.add(import_topics_col)
 
         page.update()
@@ -801,7 +804,8 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['group_list_copied'])
 
     def copy_accesscode(e: ft.ControlEvent):
-        page.set_clipboard(elements.global_vars.ACCESS_CODE)
+        access_code = load_config_file('config.json')['upload_topic_access_code']
+        page.set_clipboard(access_code)
         open_snackbar(labels['snack_bars']['accesscode_copied'])
 
     def title_text(text: str):
@@ -1123,7 +1127,7 @@ def main(page: ft.Page):
                                 title_text(labels['titles']['multi_add']),
                                 ft.Text(labels['simple_text']['upload_topics'], size=18),
                                 ft.Row([
-                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode, data=elements.global_vars.ACCESS_CODE)
+                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode)
                                 ],
                                     alignment=ft.MainAxisAlignment.END
                                 ),

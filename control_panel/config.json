@@ -1,6 +1,6 @@
 {
   "auth": {
-    "login": "admin",
-    "password": "admin"
-  }
+    "login": "admin"
+  },
+  "upload_topic_access_code": "F02627B776013F3"
 }

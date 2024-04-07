@@ -1017,6 +1017,7 @@ def main(page: ft.Page):
         )
         btn_rem_part.disabled = False
         btn_register.disabled = True
+        parts_count.value = str(len(parts.controls) // 3)
         if len(parts.controls) == 15:
             btn_add_part.disabled = True
         page.update()
@@ -1025,14 +1026,10 @@ def main(page: ft.Page):
         for _ in range(3):
             parts.controls.pop()
         btn_add_part.disabled = False
-        if len(parts.controls) == 0:
+        if len(parts.controls) == 3:
             btn_rem_part.disabled = True
+        parts_count.value = str(len(parts.controls) // 3)
         validate_registrationfields('1')
-        page.update()
-
-    def open_dialog(dialog: ft.AlertDialog):
-        page.dialog = dialog
-        dialog.open = True
         page.update()
 
     group_name_field = ft.TextField(label='Название команды', hint_text='Введи название команды', on_change=validate_registrationfields)
@@ -1050,6 +1047,7 @@ def main(page: ft.Page):
     ])
 
     btn_add_part = ft.IconButton(ft.icons.ADD_ROUNDED, on_click=add_part, tooltip="Добавить участника")
+    parts_count = ft.Text('1', size=16, weight=ft.FontWeight.W_400)
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
     btn_register = ft.ElevatedButton("Зарегистрироваться", icon=ft.icons.APP_REGISTRATION_ROUNDED, expand=False, width=400, disabled=True, on_click=register)
 
@@ -1404,8 +1402,10 @@ def main(page: ft.Page):
                                         ft.Row(
                                             [
                                                 ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
-                                                btn_add_part,
-                                                btn_rem_part
+                                                btn_rem_part,
+                                                parts_count,
+                                                btn_add_part
+
                                             ]
                                         ),
                                         parts

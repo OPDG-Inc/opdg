@@ -38,7 +38,11 @@ def upload_topic():
         return "ok"
 
 
+@app.route('/check', methods=['GET'])
+def check_status():
+    if request.method == 'GET':
+        return 'ok'
+
+
 if __name__ == '__main__':
     app.run()
-
-

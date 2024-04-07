@@ -23,7 +23,6 @@ from elements.text import labels
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
-
 load_dotenv()
 
 
@@ -115,45 +114,48 @@ def main(page: ft.Page):
         else:
             return cur.fetchone()
 
-    def get_stats():
-        elements.global_vars.GROUP_COUNT = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
-        elements.global_vars.PART_COUNT = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
-        elements.global_vars.VIDEOS = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+    group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    videos_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
 
-        stats_card = ft.Card(
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Container(
-                            ft.Row(
-                                [
-                                    ft.Container(ft.Text("Статистика", size=20, weight=ft.FontWeight.W_700), expand=True),
-                                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip="Обновить данные")
-                                ]
-                            ),
-                            margin=ft.margin.only(bottom=20)
-                        ),
-                        statistic_tile(
-                            title="Количество групп",
-                            descr=f"{elements.global_vars.GROUP_COUNT}",
-                        ),
-                        statistic_tile(
-                            title="Количество участников",
-                            descr=f"{elements.global_vars.PART_COUNT}",
-                        ),
-                        statistic_tile(
-                            title="Загружено видео",
-                            descr=f"{elements.global_vars.VIDEOS} из {elements.global_vars.GROUP_COUNT}",
-                        )
-                    ]
-                ),
-                padding=15
-            ),
-            elevation=10,
-            width=450,
-            col={"lg": 1}
-        )
-        page.controls[-1].content.controls.insert(0, stats_card)
+    app_ver = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
+    db_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
+    flask_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
+    bot_status = ft.Text('загрузка...', size=20, weight=ft.FontWeight.W_600)
+
+    def get_stats():
+        group_count.value = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
+        part_count.value = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
+        videos_count.value = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+        page.update()
+
+    def get_app_info():
+
+        # flask
+        try:
+            response = requests.get(url='http://localhost:5000/check', timeout=3)
+            if response.status_code == 200:
+                flask_status.value = labels['elements']['is_active']
+            else:
+                flask_status.value = labels['elements']['is_not_working'].format(response.status_code)
+        except requests.exceptions.ConnectionError:
+            flask_status.value = labels['elements']['is_disabled']
+
+        # db
+        if connection.is_connected():
+            db_status.value = labels['elements']['is_active']
+        else:
+            db_status.value = labels['elements']['is_disabled']
+
+        # bot
+        if True:
+            bot_status.value = labels['elements']['is_active']
+        else:
+            bot_status.value = labels['elements']['is_disabled']
+
+        # app ver
+        app_ver.value = str(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
+
         page.update()
 
     def get_groups():
@@ -426,8 +428,15 @@ def main(page: ft.Page):
         open_dialog(edit_topic_dialog)
 
     def goto_stats():
-        page.controls[-1].content.controls.pop(0)
         get_stats()
+        open_snackbar(labels['snack_bars']['data_updated'])
+
+    def goto_info():
+        db_status.value = labels['elements']['status_loading']
+        flask_status.value = labels['elements']['status_loading']
+        bot_status.value = labels['elements']['status_loading']
+        page.update()
+        get_app_info()
         open_snackbar(labels['snack_bars']['data_updated'])
 
     def show_part_list(e: ft.ControlEvent):
@@ -502,7 +511,30 @@ def main(page: ft.Page):
                 ft.Container(
                     content=ft.ResponsiveRow(
                         [
-
+                            ft.Card(
+                                ft.Container(
+                                    content=ft.Column(
+                                        [
+                                            ft.Container(
+                                                ft.Row(
+                                                    [
+                                                        ft.Container(ft.Text(labels['titles']['statistics'], size=20, weight=ft.FontWeight.W_700), expand=True),
+                                                        ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip="Обновить данные")
+                                                    ]
+                                                ),
+                                                margin=ft.margin.only(bottom=20)
+                                            ),
+                                            statistic_tile(labels['titles']['group_count'], group_count),
+                                            statistic_tile(labels['titles']['part_count'], part_count),
+                                            statistic_tile(labels['titles']['video_count'], videos_count),
+                                        ]
+                                    ),
+                                    padding=15
+                                ),
+                                elevation=10,
+                                width=450,
+                                col={"lg": 1}
+                            ),
                             ft.Card(
                                 ft.Container(
                                     content=ft.Column(
@@ -576,27 +608,50 @@ def main(page: ft.Page):
                                 ),
                                 elevation=10,
                                 width=450,
-                                # height=500,
+                                col={"lg": 1}
+                            ),
+                            ft.Card(
+                                ft.Container(
+                                    content=ft.Column(
+                                        [
+                                            ft.Container(
+                                                ft.Row(
+                                                    [
+                                                        ft.Container(ft.Text(labels['titles']['info'], size=20, weight=ft.FontWeight.W_700), expand=True),
+                                                        ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_info(), tooltip="Обновить данные")
+                                                    ]
+                                                ),
+                                                margin=ft.margin.only(bottom=20)
+                                            ),
+                                            statistic_tile(labels['titles']['app_ver'], app_ver),
+                                            statistic_tile(labels['titles']['db_status'], db_status),
+                                            statistic_tile(labels['titles']['flask_status'], flask_status),
+                                            statistic_tile(labels['titles']['bot_status'], bot_status),
+                                        ]
+                                    ),
+                                    padding=15
+                                ),
+                                elevation=10,
+                                width=450,
                                 col={"lg": 1}
                             )
                         ],
-                        columns=3,
+                        columns=4,
                         alignment=ft.MainAxisAlignment.START,
-                        width=1200
                     )
                 )
             )
-            get_stats()
+            get_app_info()
         close_dialog(loading_dialog)
         page.update()
 
-    def statistic_tile(title: str, descr: str):
+    def statistic_tile(title: str, descr: ft.Text):
         tile = ft.ListTile(
             title=ft.Row(
                 [ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)]
             ),
             subtitle=ft.Column(
-                [ft.Text(descr, size=20, weight=ft.FontWeight.W_600)]
+                [descr]
             ),
         )
         return ft.Container(tile, margin=ft.margin.only(top=-15))
@@ -777,7 +832,7 @@ def main(page: ft.Page):
         page.update()
 
     def validate_login(e):
-        if all([login_field.value, password_field.value]):
+        if password_field.value:
             button_login.disabled = False
         else:
             button_login.disabled = True
@@ -814,8 +869,7 @@ def main(page: ft.Page):
                        text_align=ft.TextAlign.CENTER)
 
     def login():
-        auth_data = load_config_file("config.json")['auth']
-        if login_field.value.strip() == auth_data['login'] and password_field.value.strip() == os.getenv('PASSWORD'):
+        if password_field.value.strip() == os.getenv('PASSWORD'):
             password_field.value = ""
             open_snackbar(labels['snack_bars']['welcome'], bg_color=ft.colors.GREEN, text_color=ft.colors.WHITE)
             change_screen("main")
@@ -1029,11 +1083,6 @@ def main(page: ft.Page):
         on_change=change_navbar_tab
     )
 
-    login_field = ft.TextField(
-        label=labels['fields']['login'], text_align=ft.TextAlign.LEFT,
-        width=250, on_change=validate_login,
-        height=70
-    )
     password_field = ft.TextField(
         label=labels['fields']['password'], text_align=ft.TextAlign.LEFT,
         width=250, password=True, on_change=validate_login,
@@ -1061,7 +1110,6 @@ def main(page: ft.Page):
                                   error_content=ft.ProgressRing()
                                   ),
                          ),
-            login_field,
             password_field,
             button_login
         ],
@@ -1159,6 +1207,8 @@ def main(page: ft.Page):
 
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
+    get_stats()
+    # get_app_info()
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
     else:

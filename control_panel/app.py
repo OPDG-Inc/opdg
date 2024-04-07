@@ -1196,8 +1196,7 @@ def main(page: ft.Page):
                                 new_topic_field,
                                 ft.Row([btn_add_topic], alignment=ft.MainAxisAlignment.END)
                             ],
-                            width=700,
-                            height=150
+                            width=700
                         ),
                         padding=15
                     ),
@@ -1221,8 +1220,7 @@ def main(page: ft.Page):
                                 ),
 
                             ],
-                            width=700,
-                            # height=150
+                            width=700
                         ),
                         padding=15
                     ),

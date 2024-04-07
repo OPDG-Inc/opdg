@@ -509,8 +509,8 @@ def main(page: ft.Page):
         page.floating_action_button = None
 
         if tab_index in [0, 1, 2]:
-            # open_loading_snackbar(labels['snack_bars']['loading'])
-            open_dialog(loading_dialog)
+            open_loading_snackbar(labels['snack_bars']['loading'])
+            # open_dialog(loading_dialog)
             time.sleep(1)
 
         if tab['fab'] is not None:
@@ -663,7 +663,7 @@ def main(page: ft.Page):
                 )
             )
             goto_info()
-        close_dialog(loading_dialog)
+        # close_dialog(loading_dialog)
         page.update()
 
     def statistic_tile(title: str, descr: ft.Text):

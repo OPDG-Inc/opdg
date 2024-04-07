@@ -1358,60 +1358,65 @@ def main(page: ft.Page):
 
         elif route == 'registration':
             user_id = str(page.route).split("/")[2]
+            user = get_from_db(f"SELECT * FROM participants WHERE telegram_id = {user_id}", many=True)
             page.scroll = ft.ScrollMode.ADAPTIVE
+            if len(user) == 0:
+                page.controls = [
+                    ft.Text(f'Telegram ID: {user_id}', size=16),
+                    ft.Card(
+                        ft.Container(
+                            ft.Column(
+                                [
+                                    ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
+                                    ft.Container(group_name_field)
+                                ],
+                                width=600,
+                            ),
+                            padding=15
+                        ),
+                        elevation=10
+                    ),
+                    ft.Card(
+                        ft.Container(
+                            ft.Column(
+                                [
+                                    ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
+                                    ft.Container(captain_name_field),
+                                    ft.Container(captain_group_field)
+                                ],
+                                width=600
+                            ),
+                            padding=15
+                        ),
+                        elevation=10
+                    ),
+                    ft.Card(
+                        ft.Container(
+                            ft.Column(
+                                [
+                                    ft.Row(
+                                        [
+                                            ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
+                                            btn_rem_part,
+                                            parts_count,
+                                            btn_add_part
 
-            page.controls = [
-                ft.Text(f'Telegram ID: {user_id}', size=16),
-                ft.Card(
-                    ft.Container(
-                        ft.Column(
-                            [
-                                ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
-                                ft.Container(group_name_field)
-                            ],
-                            width=600,
+                                        ]
+                                    ),
+                                    parts
+                                ],
+                                width=600,
+                            ),
+                            padding=15
                         ),
-                        padding=15
+                        elevation=10
                     ),
-                    elevation=10
-                ),
-                ft.Card(
-                    ft.Container(
-                        ft.Column(
-                            [
-                                ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
-                                ft.Container(captain_name_field),
-                                ft.Container(captain_group_field)
-                            ],
-                            width=600
-                        ),
-                        padding=15
-                    ),
-                    elevation=10
-                ),
-                ft.Card(
-                    ft.Container(
-                        ft.Column(
-                            [
-                                ft.Row(
-                                    [
-                                        ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
-                                        btn_rem_part,
-                                        parts_count,
-                                        btn_add_part
-
-                                    ]
-                                ),
-                                parts
-                            ],
-                            width=600,
-                        ),
-                        padding=15
-                    ),
-                    elevation=10
-                ),
-                ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
-            ]
+                    ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
+                ]
+            else:
+                page.controls = [
+                    title_text('Твоя команда уже зарегистрирована')
+                ]
 
 
     page.update()

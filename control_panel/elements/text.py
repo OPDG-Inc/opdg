@@ -33,9 +33,10 @@ labels = {
         'update_project': "Обновить проект",
         'copy_error_text': "Скопировать текст ошибки",
         'copy': "Копировать",
+        'copy_code': "Копировать код",
         'video_link': "Открыть видео",
         'group_part': "Участники",
-        'upload': "Выберите файл..."
+        'upload': "Открыть форму"
     },
     'fields': {
         'login': "Логин",

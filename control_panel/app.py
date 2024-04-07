@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import os
 import platform
+import random
 import subprocess
 import time
 import uuid
@@ -63,6 +64,39 @@ def main(page: ft.Page):
 
     # page.window_width = 720
     # page.window_height = 1280
+
+    def on_dialog_result(e: ft.FilePickerResultEvent):
+        print("Selected files:", e.files)
+        save_uploaded_file()
+
+    def save_new_topic(e: ft.ControlEvent):
+        topic = new_topic_field.value.strip()
+        get_from_db(f"INSERT INTO topic (description) VALUES ('{topic}')")
+        new_topic_field.value = ''
+        btn_add_topic.disabled = True
+
+        open_snackbar("Тема добавлена")
+
+    def save_uploaded_file():
+        upload_list = []
+        if filepicker.result is not None and filepicker.result.files is not None:
+            file = filepicker.result.files[-1]
+            open_loading_snackbar(f"Загружаем {file.name}")
+            upload_list.append(
+                ft.FilePickerUploadFile(
+                    file.name,
+                    upload_url=page.get_upload_url(file.name, 600),
+                )
+            )
+            print("OK")
+            print(filepicker.upload(upload_list))
+            print("OK")
+            time.sleep(3)
+            print("OK3")
+            upload_topic_from_file(file.name)
+
+    filepicker = ft.FilePicker(on_result=on_dialog_result)
+    page.overlay.append(filepicker)
 
     def open_loading_snackbar(text: str):
         content = ft.Row(
@@ -657,6 +691,13 @@ def main(page: ft.Page):
             edit_params_dialog.actions[0].disabled = True
         page.update()
 
+    def validate_topic_name(e: ft.ControlEvent):
+        if new_topic_field.value:
+            btn_add_topic.disabled = False
+        else:
+            btn_add_topic.disabled = True
+        page.update()
+
     param_field = ft.TextField(
         password=True,
         can_reveal_password=False,
@@ -793,6 +834,7 @@ def main(page: ft.Page):
 
         elif target == "import_themes":
             page.navigation_bar = navbar
+            elements.global_vars.ACCESS_CODE = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
             page.add(import_topics_col)
 
         # elif target == "error":
@@ -1136,6 +1178,9 @@ def main(page: ft.Page):
         elevation=10
     )
 
+    btn_add_topic = ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True, on_click=save_new_topic)
+    new_topic_field = ft.TextField(label="Тема", hint_text="Введите описание темы", on_change=validate_topic_name)
+
     import_topics_col = ft.Container(
         ft.Column(
             controls=[
@@ -1144,8 +1189,8 @@ def main(page: ft.Page):
                         content=ft.Column(
                             [
                                 title_text('Одиночное добавление'),
-                                ft.TextField(label="Тема", hint_text="Введите описание темы"),
-                                ft.Row([ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True)], expand=True, alignment=ft.MainAxisAlignment.END)
+                                new_topic_field,
+                                ft.Row([btn_add_topic], alignment=ft.MainAxisAlignment.END)
                             ],
                             width=700,
                             height=150
@@ -1158,9 +1203,13 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             [
-                                title_text('Загрузка из файла'),
-                                ft.Text("Нажмите на кнопку ниже и загрузите .txt файл со списком тем (на одной строке одна тема)", size=18),
-                                ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED)
+                                title_text('Массовая загрузка'),
+                                ft.Text(f"Скопируйте код подключения, после чего откройте форму и вставьте список тем, не забудьте вставить скопированный код подключения", size=18),
+                                ft.Row([
+                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=lambda _: page.set_clipboard(elements.global_vars.ACCESS_CODE)),
+                                    ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED, url='https://forms.yandex.ru/u/661287c843f74fd25dec9fbc')
+                                ]),
+
                             ],
                             width=700,
                             height=150
@@ -1173,7 +1222,7 @@ def main(page: ft.Page):
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         ),
-        expand=True,
+        # expand=True,
     )
 
     vertext = ft.Text(
@@ -1203,8 +1252,6 @@ DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
     connection, cur = create_db_connection()
-    for index, p in enumerate(os.environ):
-        print(index, p, os.environ[p])
     if platform.system() == 'Windows':
         ft.app(assets_dir='assets', target=main, use_color_emoji=True, upload_dir='assets/uploads')
     else:

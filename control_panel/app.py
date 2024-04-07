@@ -874,6 +874,10 @@ def main(page: ft.Page):
         page.set_clipboard(elements.global_vars.ERROR_TEXT)
         open_snackbar(labels['snack_bars']['error_text_copied'])
 
+    def copy_accesscode(e: ft.ControlEvent):
+        page.set_clipboard(elements.global_vars.ACCESS_CODE)
+        open_snackbar(labels['snack_bars']['accesscode_copied'])
+
     def title_text(text: str):
         return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_700,
                        text_align=ft.TextAlign.CENTER)
@@ -1203,16 +1207,22 @@ def main(page: ft.Page):
                     ft.Container(
                         content=ft.Column(
                             [
-                                title_text('Массовая загрузка'),
+                                title_text('Массовое добавление'),
                                 ft.Text(f"Скопируйте код подключения, после чего откройте форму и вставьте список тем, не забудьте вставить скопированный код подключения", size=18),
                                 ft.Row([
-                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=lambda _: page.set_clipboard(elements.global_vars.ACCESS_CODE)),
+                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode, data=elements.global_vars.ACCESS_CODE)
+                                ],
+                                    alignment=ft.MainAxisAlignment.END
+                                ),
+                                ft.Row([
                                     ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED, url='https://forms.yandex.ru/u/661287c843f74fd25dec9fbc')
-                                ]),
+                                ],
+                                    alignment=ft.MainAxisAlignment.END
+                                ),
 
                             ],
                             width=700,
-                            height=150
+                            # height=150
                         ),
                         padding=15
                     ),

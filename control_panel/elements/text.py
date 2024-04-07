@@ -54,7 +54,8 @@ labels = {
         'table_deleted': "Таблица удалена",
         'data_edited': "Данные изменены",
         'data_updated': "Данные обновлены",
-        'loading': "Загружаем"
+        'loading': "Загружаем",
+        'accesscode_copied': "Код подключения скопирован"
     },
     'statuses': {
         'topic_free': "Свободна",

@@ -261,7 +261,6 @@ def main(page: ft.Page):
         rr = ft.ResponsiveRow(columns=3)
 
         topics_list = get_from_db(f"SELECT * from topic", many=True)
-        print(len(topics_list))
         if len(topics_list) > 0:
             busy_count = 0
             for topic in topics_list:
@@ -512,7 +511,7 @@ def main(page: ft.Page):
                                                 title=labels['titles']['topics'],
                                                 descr=labels['simple_text']['rem_topics_descr'],
                                                 icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
-                                                btn_text=labels['buttos']['delete'],
+                                                btn_text=labels['buttons']['delete'],
                                                 btn_data='delete_manytopic',
                                                 btn_action=confirm_delete
                                             ),
@@ -520,7 +519,7 @@ def main(page: ft.Page):
                                                 title=labels['titles']['groups'],
                                                 descr=labels['simple_text']['rem_groups_descr'],
                                                 icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
-                                                btn_text=labels['buttos']['delete'],
+                                                btn_text=labels['buttons']['delete'],
                                                 btn_data='delete_manysgroups',
                                                 btn_action=confirm_delete
                                             ),
@@ -528,7 +527,7 @@ def main(page: ft.Page):
                                                 title=labels['titles']['jury'],
                                                 descr=labels['simple_text']['rem_jury_descr'],
                                                 icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
-                                                btn_text=labels['buttos']['delete'],
+                                                btn_text=labels['buttons']['delete'],
                                                 btn_data='delete_manyjury',
                                                 btn_action=confirm_delete
                                             )
@@ -646,7 +645,6 @@ def main(page: ft.Page):
     )
 
     def validate_jury_field(e: ft.ControlEvent):
-        print(len(jury_name_field.value.strip().split(" ")))
         if len(jury_name_field.value.strip().split(" ")) in [2, 3]:
             new_jury_card.content.content.controls[-1].controls[-1].disabled = False
         else:
@@ -669,8 +667,6 @@ def main(page: ft.Page):
         elif param == 'BOT_TOKEN':
             url = f"https://api.telegram.org/bot{param_field.value}/getMe"
 
-        print(url)
-        print(headers)
         response = requests.get(url=url, headers=headers)
         if response.status_code == 200:
             param_field.border_color = ft.colors.GREEN
@@ -710,7 +706,6 @@ def main(page: ft.Page):
 
     def add_jury(e: ft.ControlEvent):
         pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
-        print(pass_phrase)
         get_from_db(f"INSERT INTO jury (name, pass_phrase) VALUES ('{jury_name_field.value}', '{pass_phrase}')")
         jury_name_field.value = ''
         change_screen("main")
@@ -839,7 +834,6 @@ def main(page: ft.Page):
             return e
 
     def confirm_delete(e: ft.ControlEvent):
-        print('data', e.control.data)
         confirmation_dialog.actions[-1].data = e.control.data
         open_dialog(confirmation_dialog)
 
@@ -860,7 +854,6 @@ def main(page: ft.Page):
             page.update()
 
     def delete_element(data):
-        print(data)
         if not data[0].startswith('many'):
             get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
             for index, card in enumerate(page.controls[-1].controls):

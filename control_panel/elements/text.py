@@ -40,7 +40,7 @@ labels = {
         'group_part': "Участники",
         'upload': "Открыть форму",
         'edit_token': "Изменить токен",
-        'edit_password': "Изменит пароль"
+        'edit_password': "Изменить пароль"
     },
     'fields': {
         'login': "Логин",

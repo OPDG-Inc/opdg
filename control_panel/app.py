@@ -1414,10 +1414,7 @@ def main(page: ft.Page):
                     ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
                 ]
             else:
-                page.controls = [
-                    title_text('Твоя команда уже зарегистрирована')
-                ]
-
+                show_error('already_registered', labels['errors']['already_registered'])
 
     page.update()
 

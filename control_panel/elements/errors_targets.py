@@ -24,5 +24,10 @@ targets = {
     'db_request': {
         'image': "db_request.png",
         'title': labels['error_titles']['db_request']
-    }
+    },
+    'already_registered': {
+        'image': "already_registered.png",
+        'title': labels['error_titles']['already_registered']
+    },
+
 }

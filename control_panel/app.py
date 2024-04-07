@@ -154,7 +154,7 @@ def main(page: ft.Page):
             bot_status.value = labels['elements']['is_disabled']
 
         # app ver
-        app_ver.value = str(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
+        app_ver.value = str(subprocess.check_output(['/usr/bin/git', 'rev-parse', 'HEAD'], cwd=parent_directory))[2:9]
 
         page.update()
 

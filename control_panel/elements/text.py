@@ -34,7 +34,8 @@ labels = {
         'copy_error_text': "Скопировать текст ошибки",
         'copy': "Копировать",
         'video_link': "Открыть видео",
-        'group_part': "Участники"
+        'group_part': "Участники",
+        'upload': "Выберите файл..."
     },
     'fields': {
         'login': "Логин",

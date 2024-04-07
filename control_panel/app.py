@@ -111,6 +111,15 @@ def main(page: ft.Page):
         else:
             return cur.fetchone()
 
+    def upload_topic_from_file(file: str):
+        with open(os.path.join('assets/uploads', file)) as file:
+            topics_list = [topic.strip() for topic in file.readlines()]
+        for topic in topics_list:
+            get_from_db(f"INSERT INTO topic (description) VALUES ('{topic}')")
+        change_screen('main')
+        change_navbar_tab(0)
+        open_snackbar("Темы загружены")
+
     def get_stats():
         elements.global_vars.GROUP_COUNT = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
         elements.global_vars.PART_COUNT = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
@@ -782,6 +791,10 @@ def main(page: ft.Page):
             page.navigation_bar = navbar
             page.add(new_jury_card)
 
+        elif target == "import_themes":
+            page.navigation_bar = navbar
+            page.add(import_topics_col)
+
         # elif target == "error":
         #     page.add(ft.Container(error_col, expand=True), )  # footer)
 
@@ -1121,6 +1134,46 @@ def main(page: ft.Page):
             padding=15
         ),
         elevation=10
+    )
+
+    import_topics_col = ft.Container(
+        ft.Column(
+            controls=[
+                ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            [
+                                title_text('Одиночное добавление'),
+                                ft.TextField(label="Тема", hint_text="Введите описание темы"),
+                                ft.Row([ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True)], expand=True, alignment=ft.MainAxisAlignment.END)
+                            ],
+                            width=700,
+                            height=150
+                        ),
+                        padding=15
+                    ),
+                    elevation=10
+                ),
+                ft.Card(
+                    ft.Container(
+                        content=ft.Column(
+                            [
+                                title_text('Загрузка из файла'),
+                                ft.Text("Нажмите на кнопку ниже и загрузите .txt файл со списком тем (на одной строке одна тема)", size=18),
+                                ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED)
+                            ],
+                            width=700,
+                            height=150
+                        ),
+                        padding=15
+                    ),
+                    elevation=10
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        ),
+        expand=True,
     )
 
     vertext = ft.Text(

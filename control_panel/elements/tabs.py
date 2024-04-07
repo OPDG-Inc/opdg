@@ -4,7 +4,7 @@ tabs_config = {
     0: {
         "index": "topics",
         "title": "Темы",
-        "fab": None,
+        "fab": True,
         "fab_text": "Импорт",
         "fab_icon": icons.UPLOAD_ROUNDED,
         "fab_target": "import_themes",

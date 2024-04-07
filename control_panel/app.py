@@ -1357,67 +1357,62 @@ def main(page: ft.Page):
             change_screen("login")
 
         elif route == 'registration':
+            user_id = str(page.route).split("/")[2]
             page.scroll = ft.ScrollMode.ADAPTIVE
-            reg_data = str(page.route).split("/")[-1].split("_")
-            if len(reg_data) == 2:
-                user_id = reg_data[0]
-                hash = reg_data[1]
 
-                cur.execute(f"SELECT * FROM registration WHERE user_id = '{user_id}' AND hash = '{hash}'")
-                is_real_user = cur.fetchall()
-                if len(is_real_user) == 1:
-                    page.controls = [
-                        ft.Text(f'Регистрация (telegram_id: {user_id}, hash: {hash})'),
-                        ft.Card(
-                            ft.Container(
-                                ft.Column(
-                                    [
-                                        ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
-                                        ft.Container(group_name_field)
-                                    ],
-                                    width=600,
-                                ),
-                                padding=15
-                            ),
-                            elevation=10
+            page.controls = [
+                ft.Text(f'Регистрация (telegram_id: {user_id})'),
+                ft.Card(
+                    ft.Container(
+                        ft.Column(
+                            [
+                                ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
+                                ft.Container(group_name_field)
+                            ],
+                            width=600,
                         ),
-                        ft.Card(
-                            ft.Container(
-                                ft.Column(
-                                    [
-                                        ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
-                                        ft.Container(captain_name_field),
-                                        ft.Container(captain_group_field)
-                                    ],
-                                    width=600
-                                ),
-                                padding=15
-                            ),
-                            elevation=10
+                        padding=15
+                    ),
+                    elevation=10
+                ),
+                ft.Card(
+                    ft.Container(
+                        ft.Column(
+                            [
+                                ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
+                                ft.Container(captain_name_field),
+                                ft.Container(captain_group_field)
+                            ],
+                            width=600
                         ),
-                        ft.Card(
-                            ft.Container(
-                                ft.Column(
+                        padding=15
+                    ),
+                    elevation=10
+                ),
+                ft.Card(
+                    ft.Container(
+                        ft.Column(
+                            [
+                                ft.Row(
                                     [
-                                        ft.Row(
-                                            [
-                                                ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
-                                                btn_rem_part,
-                                                parts_count,
-                                                btn_add_part
+                                        ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
+                                        btn_rem_part,
+                                        parts_count,
+                                        btn_add_part
 
-                                            ]
-                                        ),
-                                        parts
-                                    ],
-                                    width=600,
+                                    ]
                                 ),
-                                padding=15
-                            ),
-                            elevation=10
+                                parts
+                            ],
+                            width=600,
                         ),
-                        ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
-                    ]
+                        padding=15
+                    ),
+                    elevation=10
+                ),
+                ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
+            ]
+
 
     page.update()
 

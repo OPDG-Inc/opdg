@@ -23,6 +23,7 @@ def insert_topic(data):
     user_access_code = data['Код подключения']
     true_access_code = load_config_file('config.json')['upload_topic_access_code']
     topic_list = [(a,) for a in data['Список тем'].split('\n') if a.strip()]
+    print(user_access_code, true_access_code)
     if user_access_code == true_access_code:
         sql_query = "INSERT INTO topic (description) VALUES (%s)"
         cur.executemany(sql_query, topic_list)
@@ -32,6 +33,7 @@ def insert_topic(data):
 def upload_topic():
     if request.method == 'POST':
         data = json.loads(request.data.decode('utf-8'))
+        print(data)
         insert_topic(data)
         return "ok"
 

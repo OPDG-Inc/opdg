@@ -1049,7 +1049,7 @@ def main(page: ft.Page):
     btn_add_part = ft.IconButton(ft.icons.ADD_ROUNDED, on_click=add_part, tooltip="Добавить участника")
     parts_count = ft.Text('1', size=16, weight=ft.FontWeight.W_400)
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
-    btn_register = ft.ElevatedButton("Зарегистрироваться", icon=ft.icons.APP_REGISTRATION_ROUNDED, expand=False, width=400, disabled=True, on_click=register)
+    btn_register = ft.ElevatedButton(content=ft.Text("Зарегистрироваться", size=16, weight=ft.FontWeight.W_400), expand=False, disabled=True, on_click=register)
 
     def confirmed(e):
         page.clean()
@@ -1361,7 +1361,7 @@ def main(page: ft.Page):
             page.scroll = ft.ScrollMode.ADAPTIVE
 
             page.controls = [
-                ft.Text(f'Регистрация (telegram_id: {user_id})'),
+                ft.Text(f'Telegram ID: {user_id}', size=16),
                 ft.Card(
                     ft.Container(
                         ft.Column(

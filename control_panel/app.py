@@ -1369,6 +1369,7 @@ def main(page: ft.Page):
                 is_real_user = cur.fetchall()
                 if len(is_real_user) == 1:
                     page.controls = [
+                        ft.Text(f'Регистрация (telegram_id: {user_id}, hash: {hash})'),
                         ft.Card(
                             ft.Container(
                                 ft.Column(

@@ -287,7 +287,7 @@ def main(page: ft.Page):
         }
 
         # rr = ft.ResponsiveRow(columns=3)
-        rr = ft.ListView(animate_opacity=200, opacity=0, width=800)
+        rr = ft.ListView(animate_opacity=200, opacity=0, width=800, first_item_prototype=True)
 
         topics_list = get_from_db(f"SELECT * from topic", many=True)
         if len(topics_list) > 0:

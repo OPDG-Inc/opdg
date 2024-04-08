@@ -343,7 +343,7 @@ def main(page: ft.Page):
 
         # rr = ft.ResponsiveRow(columns=3)
         rr = ft.ListView(
-            animate_opacity=0,
+            animate_opacity=400,
             opacity=0, width=800
         )
         page.add(rr)

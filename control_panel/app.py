@@ -138,7 +138,7 @@ def main(page: ft.Page):
         time.sleep(1)
         # flask
         try:
-            response = requests.get(url='http://localhost:5000/check', timeout=3)
+            response = requests.get(url='http://localhost:5000/check')
             if response.status_code == 200:
                 flask_status.value = labels['elements']['is_active']
             else:
@@ -1405,7 +1405,8 @@ def main(page: ft.Page):
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if platform.system() == "Windows":
-        page.route = f'/registration/{random.randint(1000, 10000)}'
+        page.route = '/panel'
+        # page.route = f'/registration/{random.randint(1000, 10000)}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

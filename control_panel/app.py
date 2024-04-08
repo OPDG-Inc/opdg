@@ -327,7 +327,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_topics():
-        # time.sleep(0.5)
+        time.sleep(0.5)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],
@@ -638,6 +638,7 @@ def main(page: ft.Page):
                     icon=tab['fab_icon'],
                     on_click=lambda _: change_screen(tab['fab_target'])
                 )
+            page.update()
 
             if tab_index == 0:
                 get_topics()

@@ -60,6 +60,9 @@ def main(page: ft.Page):
         "Geologica": "fonts/Geologica.ttf",
     }
 
+    page.window_width = 377
+    page.window_height = 768
+
     def save_new_topic(e: ft.ControlEvent):
         topic = new_topic_field.value.strip()
         get_from_db(f"INSERT INTO topic (description) VALUES ('{topic}')")
@@ -190,7 +193,11 @@ def main(page: ft.Page):
             }
         }
         # rr = ft.ResponsiveRow(columns=4)
-        rr = ft.ListView(opacity=0, animate_opacity=400, width=800)
+        rr = ft.ListView(
+            opacity=0,
+            animate_opacity=400,
+            width=800
+        )
         page.add(rr)
         page.update()
 
@@ -287,7 +294,10 @@ def main(page: ft.Page):
         }
 
         # rr = ft.ResponsiveRow(columns=3)
-        rr = ft.ListView(animate_opacity=400, opacity=0, width=800)
+        rr = ft.ListView(
+            animate_opacity=400,
+            opacity=0, width=800
+        )
         page.add(rr)
         page.update()
 
@@ -344,7 +354,6 @@ def main(page: ft.Page):
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
             else:
                 show_error('empty_topics', labels['errors']['empty_topics'])
-
 
         page.update()
 
@@ -435,7 +444,7 @@ def main(page: ft.Page):
                                     ),
                                     ),
                                     ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
-                                    ft.Text(description, size=18, font_family="Geologica")
+                                    ft.Row([ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)], width=800, alignment=ft.MainAxisAlignment.CENTER)
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -550,142 +559,19 @@ def main(page: ft.Page):
             elif tab_index == 2:
                 get_jury()
             elif tab_index == 3:
+                settings_col.opacity = 0
+
+                goto_stats()
                 page.add(
                     ft.Container(
-                        content=ft.ListView(
-                            [
-                                ft.Card(
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Container(
-                                                    ft.Row(
-                                                        [
-                                                            ft.Container(ft.Text(labels['titles']['statistics'], size=20, weight=ft.FontWeight.W_700), expand=True),
-                                                            ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip="Обновить данные")
-                                                        ]
-                                                    ),
-                                                    margin=ft.margin.only(bottom=20)
-                                                ),
-                                                statistic_tile(labels['titles']['group_count'], group_count),
-                                                statistic_tile(labels['titles']['part_count'], part_count),
-                                                statistic_tile(labels['titles']['video_count'], videos_count),
-                                            ]
-                                        ),
-                                        padding=15
-                                    ),
-                                    elevation=10,
-                                    width=450,
-                                    col={"lg": 1}
-                                ),
-                                ft.Card(
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Container(title_text(labels['titles']['removing_data']), margin=ft.margin.only(bottom=20)),
-                                                settings_tile(
-                                                    title=labels['titles']['topics'],
-                                                    descr=labels['simple_text']['rem_topics_descr'],
-                                                    icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
-                                                    btn_text=labels['buttons']['delete'],
-                                                    btn_data='delete_manytopic',
-                                                    btn_action=confirm_delete
-                                                ),
-                                                settings_tile(
-                                                    title=labels['titles']['groups'],
-                                                    descr=labels['simple_text']['rem_groups_descr'],
-                                                    icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
-                                                    btn_text=labels['buttons']['delete'],
-                                                    btn_data='delete_manysgroups',
-                                                    btn_action=confirm_delete
-                                                ),
-                                                settings_tile(
-                                                    title=labels['titles']['jury'],
-                                                    descr=labels['simple_text']['rem_jury_descr'],
-                                                    icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
-                                                    btn_text=labels['buttons']['delete'],
-                                                    btn_data='delete_manyjury',
-                                                    btn_action=confirm_delete
-                                                )
-                                            ]
-                                        ),
-                                        padding=15
-                                    ),
-                                    elevation=10,
-                                    width=450,
-                                    col={"lg": 1}
-                                ),
-
-                                ft.Card(
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Container(title_text(labels['titles']['auth']), margin=ft.margin.only(bottom=20)),
-                                                settings_tile(
-                                                    title=labels['statuses']['oauth_token'],
-                                                    descr=labels['simple_text']['oauth_token_descr'],
-                                                    icon=ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30),
-                                                    btn_text=labels['buttons']['edit_token'],
-                                                    btn_data='OAUTH_TOKEN',
-                                                    btn_action=get_update_params
-                                                ),
-                                                settings_tile(
-                                                    title=labels['statuses']['bot_token'],
-                                                    descr=labels['simple_text']['bot_token_descr'],
-                                                    icon=ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30),
-                                                    btn_text=labels['buttons']['edit_token'],
-                                                    btn_data='BOT_TOKEN',
-                                                    btn_action=get_update_params
-                                                ),
-                                                settings_tile(
-                                                    title=labels['statuses']['password'],
-                                                    descr=labels['simple_text']['password_descr'],
-                                                    icon=ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30),
-                                                    btn_text=labels['buttons']['edit_password'],
-                                                    btn_data='PASSWORD',
-                                                    btn_action=get_update_params
-                                                )
-                                            ]
-                                        ),
-                                        padding=15
-                                    ),
-                                    elevation=10,
-                                    width=450,
-                                    col={"lg": 1}
-                                ),
-                                ft.Card(
-                                    ft.Container(
-                                        content=ft.Column(
-                                            [
-                                                ft.Container(
-                                                    ft.Row(
-                                                        [
-                                                            ft.Container(ft.Text(labels['titles']['info'], size=20, weight=ft.FontWeight.W_700), expand=True),
-                                                            ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_info(), tooltip="Обновить данные")
-                                                        ]
-                                                    ),
-                                                    margin=ft.margin.only(bottom=20)
-                                                ),
-                                                statistic_tile(labels['titles']['app_ver'], app_ver),
-                                                statistic_tile(labels['titles']['db_status'], db_status),
-                                                statistic_tile(labels['titles']['flask_status'], flask_status),
-                                                statistic_tile(labels['titles']['bot_status'], bot_status),
-                                                statistic_tile(labels['titles']['disk_status'], disk_status),
-                                            ]
-                                        ),
-                                        padding=15
-                                    ),
-                                    elevation=10,
-                                    width=450,
-                                    col={"lg": 1}
-                                )
-                            ],
-                            width=800
-                        )
+                        content=settings_col
                     )
                 )
+                page.update()
+
+                settings_col.opacity = 1
                 goto_info()
-            # close_dialog(loading_dialog)
+
         page.update()
 
     def statistic_tile(title: str, descr: ft.Text):
@@ -843,7 +729,7 @@ def main(page: ft.Page):
         global current_tab_index
         page.navigation_bar = None
         page.floating_action_button = None
-        page.clean()
+        page.controls.clear()
 
         if target in screens.keys():
             appbar.title.value = screens[target]['title']
@@ -911,7 +797,7 @@ def main(page: ft.Page):
 
     def title_text(text: str):
         return ft.Text(text, size=20, font_family="Geologica", weight=ft.FontWeight.W_700,
-                       text_align=ft.TextAlign.CENTER)
+                       text_align=ft.TextAlign.START)
 
     def login():
         if password_field.value.strip() == os.getenv('PASSWORD'):
@@ -1032,28 +918,30 @@ def main(page: ft.Page):
         page.update()
 
     def add_part(e: ft.ControlEvent):
-        parts.controls.append(ft.Divider())
-        parts.controls.append(
-            ft.TextField(label='ФИО', hint_text='Иванов Иван Иванович', on_change=validate_registrationfields)
-        )
-        parts.controls.append(
-            ft.TextField(label='Номер группы', hint_text='5130904/20002', on_change=validate_registrationfields)
-        )
-        btn_rem_part.disabled = False
-        btn_register.disabled = True
-        parts_count.value = str(len(parts.controls) // 3)
-        if len(parts.controls) == 15:
-            btn_add_part.disabled = True
+        if len(parts.controls) <= 12:
+            parts.controls.append(ft.Divider())
+            parts.controls.append(
+                ft.TextField(label='ФИО', hint_text='Иванов Иван Иванович', on_change=validate_registrationfields)
+            )
+            parts.controls.append(
+                ft.TextField(label='Номер группы', hint_text='5130904/20002', on_change=validate_registrationfields)
+            )
+            btn_rem_part.disabled = False
+            btn_register.disabled = True
+            parts_count.value = str(len(parts.controls) // 3)
+            if len(parts.controls) == 15:
+                btn_add_part.disabled = True
         page.update()
 
     def rem_part(e: ft.ControlEvent):
-        for _ in range(3):
-            parts.controls.pop()
-        btn_add_part.disabled = False
-        if len(parts.controls) == 3:
-            btn_rem_part.disabled = True
-        parts_count.value = str(len(parts.controls) // 3)
-        validate_registrationfields('1')
+        if len(parts) > 3:
+            for _ in range(3):
+                parts.controls.pop()
+            btn_add_part.disabled = False
+            if len(parts.controls) == 3:
+                btn_rem_part.disabled = True
+            parts_count.value = str(len(parts.controls) // 3)
+            validate_registrationfields('1')
         page.update()
 
     group_name_field = ft.TextField(label='Название команды', hint_text='Введи название команды', on_change=validate_registrationfields)
@@ -1116,6 +1004,7 @@ def main(page: ft.Page):
             ft.ElevatedButton(
                 text=labels['buttons']['copy'],
                 icon=ft.icons.COPY_ROUNDED,
+                bgcolor=ft.colors.PRIMARY_CONTAINER,
                 on_click=lambda _: copy_part()
             )
         ]
@@ -1132,7 +1021,8 @@ def main(page: ft.Page):
         label=labels['fields']['confirm_code'],
         hint_text=labels['fields_hint']['confirm_code'],
         text_align=ft.TextAlign.CENTER,
-        border_width=3
+        border_width=3,
+        keyboard_type=ft.KeyboardType.NUMBER
     )
 
     confirmation_dialog = ft.AlertDialog(
@@ -1155,6 +1045,7 @@ def main(page: ft.Page):
             ft.ElevatedButton(
                 text=labels['buttons']['accept'],
                 icon=ft.icons.CHECK_ROUNDED,
+                bgcolor=ft.colors.PRIMARY_CONTAINER,
                 on_click=check_confirm
             )
         ],
@@ -1174,11 +1065,11 @@ def main(page: ft.Page):
                 param_field
             ],
             width=700,
-            height=60
+            height=80
         ),
         actions=[
-            ft.ElevatedButton(
-                text=labels['buttons']['check'],
+            ft.IconButton(
+                # text=labels['buttons']['check'],
                 icon=ft.icons.CHECK_ROUNDED,
                 on_click=check_param,
                 visible=False,
@@ -1188,6 +1079,7 @@ def main(page: ft.Page):
                 text=labels['buttons']['save'],
                 icon=ft.icons.SAVE_ROUNDED,
                 on_click=update_param,
+                bgcolor=ft.colors.PRIMARY_CONTAINER,
                 disabled=True
             )
         ],
@@ -1312,6 +1204,138 @@ def main(page: ft.Page):
         elevation=10
     )
 
+    settings_col = ft.ListView(
+        [
+            ft.Card(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Container(
+                                ft.Row(
+                                    [
+                                        ft.Container(ft.Text(labels['titles']['statistics'], size=20, weight=ft.FontWeight.W_700), expand=True, margin=ft.margin.only(left=15)),
+                                        ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip="Обновить данные")
+                                    ]
+                                ),
+                                margin=ft.margin.only(bottom=10)
+                            ),
+                            statistic_tile(labels['titles']['group_count'], group_count),
+                            statistic_tile(labels['titles']['part_count'], part_count),
+                            statistic_tile(labels['titles']['video_count'], videos_count),
+                        ]
+                    ),
+                    padding=15
+                ),
+                elevation=10,
+                width=450,
+                col={"lg": 1}
+            ),
+            ft.Card(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Container(title_text(labels['titles']['removing_data']), margin=ft.margin.only(bottom=10, left=15)),
+                            settings_tile(
+                                title=labels['titles']['topics'],
+                                descr=labels['simple_text']['rem_topics_descr'],
+                                icon=ft.Icon(ft.icons.TOPIC_ROUNDED),
+                                btn_text=labels['buttons']['delete'],
+                                btn_data='delete_manytopic',
+                                btn_action=confirm_delete
+                            ),
+                            settings_tile(
+                                title=labels['titles']['groups'],
+                                descr=labels['simple_text']['rem_groups_descr'],
+                                icon=ft.Icon(ft.icons.GROUPS_ROUNDED, size=30),
+                                btn_text=labels['buttons']['delete'],
+                                btn_data='delete_manysgroups',
+                                btn_action=confirm_delete
+                            ),
+                            settings_tile(
+                                title=labels['titles']['jury'],
+                                descr=labels['simple_text']['rem_jury_descr'],
+                                icon=ft.Icon(ft.icons.EMOJI_PEOPLE_ROUNDED, size=30),
+                                btn_text=labels['buttons']['delete'],
+                                btn_data='delete_manyjury',
+                                btn_action=confirm_delete
+                            )
+                        ]
+                    ),
+                    padding=15
+                ),
+                elevation=10,
+                width=450,
+                col={"lg": 1}
+            ),
+
+            ft.Card(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Container(title_text(labels['titles']['auth']), margin=ft.margin.only(bottom=20, left=15)),
+                            settings_tile(
+                                title=labels['statuses']['oauth_token'],
+                                descr=labels['simple_text']['oauth_token_descr'],
+                                icon=ft.Image(src='yadisk.png', fit=ft.ImageFit.FIT_HEIGHT, height=30),
+                                btn_text=labels['buttons']['edit_token'],
+                                btn_data='OAUTH_TOKEN',
+                                btn_action=get_update_params
+                            ),
+                            settings_tile(
+                                title=labels['statuses']['bot_token'],
+                                descr=labels['simple_text']['bot_token_descr'],
+                                icon=ft.Icon(ft.icons.TELEGRAM_ROUNDED, color='#2AABEE', size=30),
+                                btn_text=labels['buttons']['edit_token'],
+                                btn_data='BOT_TOKEN',
+                                btn_action=get_update_params
+                            ),
+                            settings_tile(
+                                title=labels['statuses']['password'],
+                                descr=labels['simple_text']['password_descr'],
+                                icon=ft.Icon(ft.icons.PASSWORD_ROUNDED, color='#2AABEE', size=30),
+                                btn_text=labels['buttons']['edit_password'],
+                                btn_data='PASSWORD',
+                                btn_action=get_update_params
+                            )
+                        ]
+                    ),
+                    padding=15
+                ),
+                elevation=10,
+                width=450,
+                col={"lg": 1}
+            ),
+            ft.Card(
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Container(
+                                ft.Row(
+                                    [
+                                        ft.Container(ft.Text(labels['titles']['info'], size=20, weight=ft.FontWeight.W_700), expand=True, margin=ft.margin.only(left=15)),
+                                        ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_info(), tooltip="Обновить данные")
+                                    ]
+                                ),
+                                margin=ft.margin.only(bottom=20)
+                            ),
+                            statistic_tile(labels['titles']['app_ver'], app_ver),
+                            statistic_tile(labels['titles']['db_status'], db_status),
+                            statistic_tile(labels['titles']['flask_status'], flask_status),
+                            statistic_tile(labels['titles']['bot_status'], bot_status),
+                            statistic_tile(labels['titles']['disk_status'], disk_status),
+                        ]
+                    ),
+                    padding=15
+                ),
+                elevation=10,
+                width=450,
+                col={"lg": 1}
+            )
+        ],
+        animate_opacity=400,
+        width=800
+    )
+
     btn_add_topic = ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True, on_click=save_new_topic)
     new_topic_field = ft.TextField(label=labels['fields']['new_topic'], hint_text=labels['fields_hint']['new_topic'], on_change=validate_topic_name)
 
@@ -1374,7 +1398,7 @@ def main(page: ft.Page):
     if platform.system() == "Windows":
         page.route = '/panel'
 
-    get_stats()
+    # get_stats()
     # get_app_info()
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

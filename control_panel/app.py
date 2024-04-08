@@ -140,10 +140,12 @@ def main(page: ft.Page):
                 logging.error(f"DATABASE REQUEST: {e}\n{sql_query}{params}")
                 if page.navigation_bar.selected_index != 3:
                     show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
+                    elements.global_vars.DB_FAIL = False
                 return None
         else:
             if page.navigation_bar.selected_index != 3:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
+                elements.global_vars.DB_FAIL = False
 
     group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
@@ -396,10 +398,7 @@ def main(page: ft.Page):
                     rr.controls.append(topic_card)
                 rr.opacity = 1
             else:
-                if elements.global_vars.DB_FAIL:
-                    show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
-                else:
-                    show_error('empty_topics', labels['errors']['empty_topics'])
+                show_error('empty_topics', labels['errors']['empty_topics'])
 
         page.update()
 
@@ -465,10 +464,7 @@ def main(page: ft.Page):
                     rr.controls.append(jury_card)
                 page.add(rr)
             else:
-                if elements.global_vars.DB_FAIL:
-                    show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
-                else:
-                    show_error('empty_jury', labels['errors']['empty_jury'])
+                show_error('empty_jury', labels['errors']['empty_jury'])
 
             page.update()
             rr.opacity = 1

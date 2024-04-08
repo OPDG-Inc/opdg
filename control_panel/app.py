@@ -139,11 +139,13 @@ def main(page: ft.Page):
                 elements.global_vars.DB_FAIL = True
                 logging.error(f"DATABASE REQUEST: {e}\n{sql_query}{params}")
                 if page.navigation_bar.selected_index != 3:
+                    page.floating_action_button = None
                     show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
                     elements.global_vars.DB_FAIL = False
                 return None
         else:
             if page.navigation_bar.selected_index != 3:
+                page.floating_action_button = None
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
                 elements.global_vars.DB_FAIL = False
 

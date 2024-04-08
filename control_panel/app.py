@@ -244,7 +244,7 @@ def main(page: ft.Page):
         # rr = ft.ResponsiveRow(columns=4)
         rr = ft.ListView(
             opacity=0,
-            animate_opacity=400,
+            animate_opacity=300,
             width=800
         )
         page.add(rr)
@@ -343,7 +343,7 @@ def main(page: ft.Page):
 
         # rr = ft.ResponsiveRow(columns=3)
         rr = ft.ListView(
-            animate_opacity=400,
+            animate_opacity=300,
             opacity=0, width=800
         )
         page.add(rr)
@@ -418,7 +418,7 @@ def main(page: ft.Page):
                 "icon": ft.Icon(ft.icons.CHECK_CIRCLE_OUTLINE_OUTLINED, color=ft.colors.GREEN)
             },
         }
-        rr = ft.ListView(opacity=0, animate_opacity=400, width=800)
+        rr = ft.ListView(opacity=0, animate_opacity=300, width=800)
 
         sql_query = "SELECT * FROM jury"
         jury_list = make_db_request(sql_query, get_many=True)
@@ -1445,7 +1445,7 @@ def main(page: ft.Page):
                 col={"lg": 1}
             )
         ],
-        animate_opacity=400,
+        animate_opacity=300,
         width=800
     )
 

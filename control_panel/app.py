@@ -148,6 +148,7 @@ def main(page: ft.Page):
                 page.floating_action_button = None
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
                 elements.global_vars.DB_FAIL = False
+                return None
 
     group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
@@ -849,11 +850,15 @@ def main(page: ft.Page):
 
         elif target == "import_themes":
             page.navigation_bar = navbar
-            access_code = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
-            config = load_config_file('config.json')
-            config['upload_topic_access_code'] = access_code
-            update_config_file(config, 'config.json')
-            page.add(import_topics_col)
+
+            sql_query = "SELECT COUNT(*) FROM topic"
+            if make_db_request(sql_query, get_many=False):
+                access_code = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
+                config = load_config_file('config.json')
+                config['upload_topic_access_code'] = access_code
+                update_config_file(config, 'config.json')
+
+                page.add(import_topics_col)
 
         page.update()
 
@@ -1451,6 +1456,8 @@ def main(page: ft.Page):
 
     btn_add_topic = ft.ElevatedButton(labels['buttons']['save'], icon=ft.icons.SAVE_ROUNDED, disabled=True, on_click=save_new_topic)
     new_topic_field = ft.TextField(label=labels['fields']['new_topic'], hint_text=labels['fields_hint']['new_topic'], on_change=validate_topic_name)
+    btn_copy_code = ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode)
+    btn_open_form = ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED, url='https://forms.yandex.ru/u/661287c843f74fd25dec9fbc')
 
     import_topics_col = ft.Container(
         ft.Column(
@@ -1476,12 +1483,12 @@ def main(page: ft.Page):
                                 title_text(labels['titles']['multi_add']),
                                 ft.Text(labels['simple_text']['upload_topics'], size=18),
                                 ft.Row([
-                                    ft.ElevatedButton(labels['buttons']['copy_code'], icon=ft.icons.COPY_ROUNDED, on_click=copy_accesscode)
+                                    btn_copy_code
                                 ],
                                     alignment=ft.MainAxisAlignment.END
                                 ),
                                 ft.Row([
-                                    ft.ElevatedButton(labels['buttons']['upload'], icon=ft.icons.FILE_UPLOAD_ROUNDED, url='https://forms.yandex.ru/u/661287c843f74fd25dec9fbc')
+                                    btn_open_form
                                 ],
                                     alignment=ft.MainAxisAlignment.END
                                 ),

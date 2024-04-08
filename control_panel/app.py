@@ -272,7 +272,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_topics():
-        time.sleep(0.5)
+        time.sleep(1)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],

@@ -683,6 +683,7 @@ def main(page: ft.Page):
         return ft.Container(tile, margin=ft.margin.only(top=-15))
 
     def reboot_service(e: ft.ControlEvent):
+        e.control.visible = False
         scripts = {
             'db': {
                 'file': 'rebootmysql',
@@ -697,8 +698,8 @@ def main(page: ft.Page):
                 'name': labels['titles']['bot_status']
             }
         }
-        subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
         open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")
+        subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
         time.sleep(3)
         goto_info()
 

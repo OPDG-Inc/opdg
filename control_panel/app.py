@@ -703,12 +703,13 @@ def main(page: ft.Page):
                 'name': labels['titles']['control_panel']
             }
         }
-        if e.control.value == 'controlpanel':
+        if e.control.data == 'controlpanel':
             reboot_dialog.content = ft.Column(
                 [
                     ft.ProgressRing(),
                     ft.Text(labels['elements']['rebooting'], size=20, weight=ft.FontWeight.W_500)
                 ],
+                height=100,
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )

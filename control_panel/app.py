@@ -272,7 +272,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_topics():
-        time.sleep(1)
+        time.sleep(0.5)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],
@@ -288,6 +288,8 @@ def main(page: ft.Page):
 
         # rr = ft.ResponsiveRow(columns=3)
         rr = ft.ListView(animate_opacity=400, opacity=0, width=800)
+        page.add(rr)
+        page.update()
 
         topics_list = get_from_db(f"SELECT * from topic", many=True)
         if len(topics_list) > 0:
@@ -336,15 +338,14 @@ def main(page: ft.Page):
                     data=topic['topic_id']
                 )
                 rr.controls.append(topic_card)
-            page.add(rr)
+            rr.opacity = 1
         else:
             if elements.global_vars.DB_FAIL:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
             else:
                 show_error('empty_topics', labels['errors']['empty_topics'])
 
-        page.update()
-        rr.opacity = 1
+
         page.update()
 
     def get_jury():

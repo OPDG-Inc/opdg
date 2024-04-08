@@ -685,7 +685,6 @@ def main(page: ft.Page):
 
     def reboot_service(e: ft.ControlEvent):
         e.control.visible = False
-        make_loading()
         scripts = {
             'db': {
                 'file': 'rebootmysql',
@@ -701,6 +700,7 @@ def main(page: ft.Page):
             }
         }
         open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")
+        make_loading()
         subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
         time.sleep(3)
         goto_info()

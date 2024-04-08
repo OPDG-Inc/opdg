@@ -5,18 +5,10 @@ from flask import Flask, request, Response
 from mysql.connector import connect
 from dotenv import load_dotenv
 from functions import load_config_file
+from app import create_db_connection
 
 app = Flask(__name__)
 load_dotenv()
-
-connection = connect(
-    host=os.getenv('DB_HOST'),
-    user=os.getenv('DB_USER'),
-    password=os.getenv('DB_PASSWORD'),
-    database=os.getenv('DB_NAME')
-)
-cur = connection.cursor(dictionary=True)
-connection.autocommit = True
 
 
 def insert_topic(data):
@@ -24,8 +16,11 @@ def insert_topic(data):
     true_access_code = load_config_file('config.json')['upload_topic_access_code']
     topic_list = [(a,) for a in data['Список тем'].split('\n') if a.strip()]
     if user_access_code == true_access_code:
-        sql_query = "INSERT INTO topic (description) VALUES (%s)"
-        cur.executemany(sql_query, topic_list)
+        connection, cur = create_db_connection()
+        if connection.is_connected():
+            sql_query = "INSERT INTO topic (description) VALUES (%s)"
+            cur.executemany(sql_query, topic_list)
+        connection.close()
 
 
 @app.route('/uploadtopic', methods=['POST'])
@@ -39,10 +34,12 @@ def upload_topic():
 @app.route('/check', methods=['GET'])
 def check_status():
     if request.method == 'GET':
-        if connection.is_connected():
-            return Response('OK', status=200)
-        else:
-            return Response('CONNECTION_ERR', status=503)
+        connection, cur = create_db_connection()
+        if connection is not None:
+            if connection.is_connected():
+                return Response('OK', status=200)
+            else:
+                return Response('CONNECTION_ERR', status=503)
 
 
 if __name__ == '__main__':

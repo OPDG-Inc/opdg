@@ -24,7 +24,8 @@ labels = {
         'is_active': "🟢 работает",
         'is_disabled': "🔴 недоступно",
         'is_not_working': "🟡 не работает (код {0})",
-        'status_loading': "загрузка..."
+        'status_loading': "загрузка...",
+        'rebooting': "Перезагружаем"
     },
     'buttons': {
         'delete': "Удалить",

@@ -703,8 +703,19 @@ def main(page: ft.Page):
                 'name': labels['titles']['control_panel']
             }
         }
-        open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")
-        make_loading()
+        if e.control.value == 'controlpanel':
+            reboot_dialog.content = ft.Column(
+                [
+                    ft.ProgressRing(),
+                    ft.Text(labels['elements']['rebooting'], size=20, weight=ft.FontWeight.W_500)
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            )
+            page.update()
+        else:
+            open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")
+            make_loading()
         subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
         time.sleep(3)
         goto_info()

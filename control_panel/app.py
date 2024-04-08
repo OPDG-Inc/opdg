@@ -129,9 +129,14 @@ def main(page: ft.Page):
     disk_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
 
     def get_stats():
-        group_count.value = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
-        part_count.value = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
-        videos_count.value = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+        if not elements.global_vars.DB_FAIL:
+            group_count.value = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
+            part_count.value = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
+            videos_count.value = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+        else:
+            group_count.value = labels['elements']['is_disabled']
+            part_count.value = labels['elements']['is_disabled']
+            videos_count.value = labels['elements']['is_disabled']
         page.update()
 
     def get_app_info():

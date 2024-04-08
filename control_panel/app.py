@@ -444,7 +444,12 @@ def main(page: ft.Page):
                                     ),
                                     ),
                                     ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
-                                    ft.Row([ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)], width=800, alignment=ft.MainAxisAlignment.CENTER)
+                                    ft.Column([
+                                        ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
+                                    ],
+                                        width=800,
+                                        alignment=ft.MainAxisAlignment.CENTER,
+                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
                                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
@@ -860,6 +865,7 @@ def main(page: ft.Page):
             if table == 'sgroups':
                 get_from_db("UPDATE topic SET status = 'free' WHERE status = 'busy'")
                 get_from_db(f'TRUNCATE TABLE participants')
+            time.sleep(1)
             open_snackbar(labels['snack_bars']['table_deleted'])
 
     def update_topic(e: ft.ControlEvent):
@@ -961,7 +967,7 @@ def main(page: ft.Page):
     btn_add_part = ft.IconButton(ft.icons.ADD_ROUNDED, on_click=add_part, tooltip="Добавить участника")
     parts_count = ft.Text('1', size=16, weight=ft.FontWeight.W_400)
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
-    btn_register = ft.ElevatedButton(text="Зарегистрироваться",width=300, height=50, disabled=True, on_click=register)
+    btn_register = ft.ElevatedButton(text="Зарегистрироваться", width=300, height=50, disabled=True, on_click=register)
 
     def confirmed(e):
         page.clean()

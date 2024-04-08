@@ -140,6 +140,8 @@ def main(page: ft.Page):
                 logging.error(f"DATABASE REQUEST: {e}\n{sql_query}{params}")
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
                 return None
+        else:
+            show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
 
     group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)

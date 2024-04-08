@@ -6,6 +6,7 @@ import random
 import subprocess
 import time
 import uuid
+import logging
 
 import flet as ft
 import flet_core
@@ -26,6 +27,9 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(message)s")
+
 
 def create_db_connection():
     try:
@@ -42,6 +46,7 @@ def create_db_connection():
     except sql_error as e:
         elements.global_vars.ERROR_TEXT = str(e)
         elements.global_vars.DB_FAIL = True
+        logging.error(f"DATABASE CONNECTION: {e}")
         return None, None
 
 
@@ -65,7 +70,9 @@ def main(page: ft.Page):
 
     def save_new_topic(e: ft.ControlEvent):
         topic = new_topic_field.value.strip()
-        get_from_db(f"INSERT INTO topic (description) VALUES ('{topic}')")
+        sql_query = "INSERT INTO topic (description) VALUES (%s)"
+        params = (topic,)
+        make_db_request(sql_query, params, put_many=False)
         new_topic_field.value = ''
         btn_add_topic.disabled = True
 
@@ -107,16 +114,32 @@ def main(page: ft.Page):
         sb.open = True
         page.update()
 
-    def get_from_db(request_text: str, many=False):
-        try:
-            cur.execute(request_text)
-        except sql_error as e:
-            elements.global_vars.ERROR_TEXT = str(e)
-            elements.global_vars.DB_FAIL = True
-        if many:
-            return cur.fetchall()
-        else:
-            return cur.fetchone()
+    def make_db_request(sql_query: str, params: tuple = (), get_many: bool = None, put_many: bool = None):
+        connection, cur = create_db_connection()
+        if connection is not None:
+            logging.info(f"DATABASE REQUEST: query: {sql_query}, params: {params}")
+            try:
+                data = True
+                if get_many is not None:
+                    cur.execute(sql_query, params)
+                    if get_many:
+                        data = cur.fetchall()
+                    elif not get_many:
+                        data = cur.fetchone()
+                elif put_many is not None:
+                    if put_many:
+                        cur.executemany(sql_query, params)
+                    elif not put_many:
+                        cur.execute(sql_query, params)
+                    data = True
+                connection.commit()
+                return data
+            except Exception as e:
+                elements.global_vars.ERROR_TEXT = str(e)
+                elements.global_vars.DB_FAIL = True
+                logging.error(f"DATABASE REQUEST: {e}\n{sql_query}{params}")
+                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
+                return None
 
     group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
@@ -130,9 +153,21 @@ def main(page: ft.Page):
 
     def get_stats():
         if not elements.global_vars.DB_FAIL:
-            group_count.value = get_from_db("SELECT COUNT(*) FROM sgroups")['COUNT(*)']
-            part_count.value = get_from_db("SELECT COUNT(*) FROM participants")['COUNT(*)']
-            videos_count.value = get_from_db("SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'")['COUNT(*)']
+            sql_query = "SELECT COUNT(*) FROM sgroups"
+            data = make_db_request(sql_query, get_many=False)
+            if data is not None:
+                group_count.value = data['COUNT(*)']
+
+            sql_query = "SELECT COUNT(*) FROM participants"
+            data = make_db_request(sql_query, get_many=False)
+            if data is not None:
+                part_count.value = data['COUNT(*)']
+
+            sql_query = "SELECT COUNT(*) FROM sgroups WHERE video_status = 'uploaded'"
+            data = make_db_request(sql_query, get_many=False)
+            if data is not None:
+                videos_count.value = data['COUNT(*)']
+
         else:
             group_count.value = labels['elements']['is_disabled']
             part_count.value = labels['elements']['is_disabled']
@@ -152,7 +187,8 @@ def main(page: ft.Page):
             flask_status.value = labels['elements']['is_disabled']
 
         # db
-        if connection.is_connected():
+        sql_query = "SELECT COUNT(*) FROM topic"
+        if make_db_request(sql_query, get_many=False):
             db_status.value = labels['elements']['is_active']
         else:
             db_status.value = labels['elements']['is_disabled']
@@ -206,85 +242,84 @@ def main(page: ft.Page):
         page.add(rr)
         page.update()
 
-        groups_list = get_from_db("SELECT * FROM sgroups", many=True)
-        if len(groups_list) > 0:
-            for group in groups_list:
+        sql_query = "SELECT * FROM sgroups"
+        groups_list = make_db_request(sql_query, (), get_many=True)
+        if groups_list is not None:
+            if len(groups_list) > 0:
+                for group in groups_list:
 
-                topic_info = get_from_db(f"SELECT * FROM topic WHERE topic_id = {group['topic_id']}")
+                    sql_query = "SELECT * FROM topic WHERE topic_id = %s"
+                    topic_info = make_db_request(sql_query, (group['topic_id'],), get_many=False)
 
-                participants_info = get_from_db(
-                    f"SELECT * FROM participants WHERE group_id = {group['group_id']}",
-                    many=True)
+                    sql_query = "SELECT * FROM participants WHERE group_id = %s"
+                    participants_info = make_db_request(sql_query, (group['group_id'],), get_many=True)
 
-                participants_panel = ft.ExpansionTile(
-                    title=ft.Text(labels['elements']['participants_panel_title'], size=18),
-                    affinity=ft.TileAffinity.LEADING,
-                )
-                for part in participants_info:
-                    participants_panel.controls.append(
-                        ft.ListTile(title=ft.Text(f"{part['name']} ({part['study_group']})", size=18,
-                                                  text_align=ft.TextAlign.START))
+                    participants_panel = ft.ExpansionTile(
+                        title=ft.Text(labels['elements']['participants_panel_title'], size=18),
+                        affinity=ft.TileAffinity.LEADING,
                     )
+                    for part in participants_info:
+                        participants_panel.controls.append(
+                            ft.ListTile(title=ft.Text(f"{part['name']} ({part['study_group']})", size=18,
+                                                      text_align=ft.TextAlign.START))
+                        )
 
-                group_card = ft.Card(
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.ListTile(
-                                    title=ft.Text(f"{group['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
-                                    subtitle=ft.Text(f"#{topic_info['topic_id']} {topic_info['description']}", size=18),
-                                ),
-                                ft.Container(
+                    group_card = ft.Card(
+                        ft.Container(
+                            content=ft.Column(
+                                controls=[
                                     ft.ListTile(
-                                        title=ft.Text(labels['elements']['marks_title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
-                                        subtitle=ft.Text(labels['elements']['no_marks_subtitle'], size=18),
+                                        title=ft.Text(f"{group['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
+                                        subtitle=ft.Text(f"#{topic_info['topic_id']} {topic_info['description']}", size=18),
                                     ),
-                                    margin=ft.margin.only(top=-20),
-                                    visible=not statuses[group['video_status']]['flag']
-                                ),
-                                ft.ResponsiveRow(
-                                    [
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['group_part'],
-                                            icon=ft.icons.GROUPS_ROUNDED,
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
-                                            data=participants_info,
-                                            on_click=show_part_list,
-                                            col={"lg": 1}
+                                    ft.Container(
+                                        ft.ListTile(
+                                            title=ft.Text(labels['elements']['marks_title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
+                                            subtitle=ft.Text(labels['elements']['no_marks_subtitle'], size=18),
                                         ),
-                                        ft.ElevatedButton(
-                                            text=statuses[group['video_status']]['title'],
-                                            icon=ft.icons.ONDEMAND_VIDEO_ROUNDED,
-                                            disabled=statuses[group['video_status']]['flag'],
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
-                                            url=group['video_link'],
-                                            col={"lg": 1}
-                                        ),
+                                        margin=ft.margin.only(top=-20),
+                                        visible=not statuses[group['video_status']]['flag']
+                                    ),
+                                    ft.ResponsiveRow(
+                                        [
+                                            ft.ElevatedButton(
+                                                text=labels['buttons']['group_part'],
+                                                icon=ft.icons.GROUPS_ROUNDED,
+                                                bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                                data=participants_info,
+                                                on_click=show_part_list,
+                                                col={"lg": 1}
+                                            ),
+                                            ft.ElevatedButton(
+                                                text=statuses[group['video_status']]['title'],
+                                                icon=ft.icons.ONDEMAND_VIDEO_ROUNDED,
+                                                disabled=statuses[group['video_status']]['flag'],
+                                                bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                                url=group['video_link'],
+                                                col={"lg": 1}
+                                            ),
 
-                                    ],
-                                    columns=2,
-                                    alignment=ft.MainAxisAlignment.END,
-                                ),
-                            ],
+                                        ],
+                                        columns=2,
+                                        alignment=ft.MainAxisAlignment.END,
+                                    ),
+                                ],
+                            ),
+                            padding=15
                         ),
-                        padding=15
-                    ),
-                    col={"lg": 1},
-                    elevation=10,
-                    data=group['group_id']
-                )
-                rr.controls.append(group_card)
-        else:
-            if elements.global_vars.DB_FAIL:
-                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
+                        col={"lg": 1},
+                        elevation=10,
+                        data=group['group_id']
+                    )
+                    rr.controls.append(group_card)
+                rr.opacity = 1
             else:
                 show_error('empty_groups', labels['errors']['empty_groups'])
 
-        rr.opacity = 1
         page.update()
 
     def get_topics():
-        time.sleep(0.5)
+        # time.sleep(0.5)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],
@@ -306,59 +341,61 @@ def main(page: ft.Page):
         page.add(rr)
         page.update()
 
-        topics_list = get_from_db(f"SELECT * from topic", many=True)
-        if len(topics_list) > 0:
-            busy_count = 0
-            for topic in topics_list:
-                if topic['status'] == "busy":
-                    busy_count += 1
-                topic_card = ft.Card(
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.ListTile(
-                                    title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
-                                    subtitle=ft.Row(
-                                        [
-                                            statuses[topic['status']]['icon'],
-                                            ft.Text(statuses[topic['status']]['title'], size=18)
-                                        ]
-                                    )
-                                ),
-                                ft.Row(
-                                    controls=[
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
-                                            visible=statuses[topic['status']]['flag'],
-                                            data=topic,
-                                            on_click=goto_edit_topic,
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER
-                                        ),
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
-                                            visible=statuses[topic['status']]['flag'],
-                                            on_click=confirm_delete,
-                                            data=f"delete_topic_{topic['topic_id']}",
-                                            bgcolor=ft.colors.RED
+        sql_query = "SELECT * from topic"
+        topics_list = make_db_request(sql_query, get_many=True)
+        if topics_list is not None:
+            if len(topics_list) > 0:
+                busy_count = 0
+                for topic in topics_list:
+                    if topic['status'] == "busy":
+                        busy_count += 1
+                    topic_card = ft.Card(
+                        ft.Container(
+                            content=ft.Column(
+                                controls=[
+                                    ft.ListTile(
+                                        title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
+                                        subtitle=ft.Row(
+                                            [
+                                                statuses[topic['status']]['icon'],
+                                                ft.Text(statuses[topic['status']]['title'], size=18)
+                                            ]
                                         )
-                                    ],
-                                    alignment=ft.MainAxisAlignment.END
-                                )
-                            ]
+                                    ),
+                                    ft.Row(
+                                        controls=[
+                                            ft.ElevatedButton(
+                                                text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
+                                                visible=statuses[topic['status']]['flag'],
+                                                data=topic,
+                                                on_click=goto_edit_topic,
+                                                bgcolor=ft.colors.PRIMARY_CONTAINER
+                                            ),
+                                            ft.ElevatedButton(
+                                                text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
+                                                visible=statuses[topic['status']]['flag'],
+                                                on_click=confirm_delete,
+                                                data=f"delete_topic_{topic['topic_id']}",
+                                                bgcolor=ft.colors.RED
+                                            )
+                                        ],
+                                        alignment=ft.MainAxisAlignment.END
+                                    )
+                                ]
+                            ),
+                            padding=15
                         ),
-                        padding=15
-                    ),
-                    elevation=10,
-                    col={"lg": 1},
-                    data=topic['topic_id']
-                )
-                rr.controls.append(topic_card)
-            rr.opacity = 1
-        else:
-            if elements.global_vars.DB_FAIL:
-                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+                        elevation=10,
+                        col={"lg": 1},
+                        data=topic['topic_id']
+                    )
+                    rr.controls.append(topic_card)
+                rr.opacity = 1
             else:
-                show_error('empty_topics', labels['errors']['empty_topics'])
+                if elements.global_vars.DB_FAIL:
+                    show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+                else:
+                    show_error('empty_topics', labels['errors']['empty_topics'])
 
         page.update()
 
@@ -376,101 +413,109 @@ def main(page: ft.Page):
                 "icon": ft.Icon(ft.icons.CHECK_CIRCLE_OUTLINE_OUTLINED, color=ft.colors.GREEN)
             },
         }
-        # rr = ft.ResponsiveRow(columns=4)
         rr = ft.ListView(opacity=0, animate_opacity=400, width=800)
-        jury_list = get_from_db("SELECT * FROM jury", many=True)
-        if len(jury_list) > 0:
-            for jury in jury_list:
-                jury_card = ft.Card(
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.ListTile(
-                                    title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
-                                    subtitle=ft.Row([
-                                        statuses[jury['status']]['icon'],
-                                        ft.Text(f"{statuses[jury['status']]['title']}", size=18)
-                                    ])
-                                ),
-                                ft.Row(
-                                    controls=[
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['delete'],
-                                            icon=ft.icons.DELETE_ROUNDED,
-                                            bgcolor=ft.colors.RED,
-                                            data=f"delete_jury_{jury['jury_id']}",
-                                            on_click=confirm_delete
-                                        ),
-                                        ft.ElevatedButton(
-                                            text=labels['buttons']['link'], icon=ft.icons.LINK_ROUNDED,
-                                            visible=statuses[jury['status']]['flag'],
-                                            data=jury['pass_phrase'],
-                                            bgcolor=ft.colors.PRIMARY_CONTAINER,
-                                            on_click=get_jury_link
-                                        )
-                                    ],
-                                    alignment=ft.MainAxisAlignment.END
-                                )
-                            ]
-                        ),
-                        padding=15
-                    ),
-                    elevation=10,
-                    col={"lg": 1},
-                    data=jury['jury_id']
-                )
-                rr.controls.append(jury_card)
-            page.add(rr)
-        else:
-            if elements.global_vars.DB_FAIL:
-                show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
-            else:
-                show_error('empty_jury', labels['errors']['empty_jury'])
 
-        page.update()
-        rr.opacity = 1
+        sql_query = "SELECT * FROM jury"
+        jury_list = make_db_request(sql_query, get_many=True)
+        if jury_list is not None:
+            if len(jury_list) > 0:
+                for jury in jury_list:
+                    jury_card = ft.Card(
+                        ft.Container(
+                            content=ft.Column(
+                                controls=[
+                                    ft.ListTile(
+                                        title=ft.Text(f"{jury['name']}", size=20, font_family="Geologica", weight=ft.FontWeight.W_700),
+                                        subtitle=ft.Row([
+                                            statuses[jury['status']]['icon'],
+                                            ft.Text(f"{statuses[jury['status']]['title']}", size=18)
+                                        ])
+                                    ),
+                                    ft.Row(
+                                        controls=[
+                                            ft.ElevatedButton(
+                                                text=labels['buttons']['delete'],
+                                                icon=ft.icons.DELETE_ROUNDED,
+                                                bgcolor=ft.colors.RED,
+                                                data=f"delete_jury_{jury['jury_id']}",
+                                                on_click=confirm_delete
+                                            ),
+                                            ft.ElevatedButton(
+                                                text=labels['buttons']['link'], icon=ft.icons.LINK_ROUNDED,
+                                                visible=statuses[jury['status']]['flag'],
+                                                data=jury['pass_phrase'],
+                                                bgcolor=ft.colors.PRIMARY_CONTAINER,
+                                                on_click=get_jury_link
+                                            )
+                                        ],
+                                        alignment=ft.MainAxisAlignment.END
+                                    )
+                                ]
+                            ),
+                            padding=15
+                        ),
+                        elevation=10,
+                        col={"lg": 1},
+                        data=jury['jury_id']
+                    )
+                    rr.controls.append(jury_card)
+                page.add(rr)
+            else:
+                if elements.global_vars.DB_FAIL:
+                    show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
+                else:
+                    show_error('empty_jury', labels['errors']['empty_jury'])
+
+            page.update()
+            rr.opacity = 1
         page.update()
 
     def show_error(target: str, description: str):
         page.scroll = None
         page.controls.clear()
-        page.add(
-            ft.Column(
-                controls=[
-                    ft.Card(
-                        ft.Container(
-                            ft.Column(
-                                [
-                                    ft.Container(ft.Image(
-                                        src=targets[target]['image'],
-                                        fit=ft.ImageFit.CONTAIN,
-                                        height=120,
-                                        error_content=ft.ProgressRing()
-                                    ),
-                                    ),
-                                    ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
-                                    ft.Column([
-                                        ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
-                                    ],
-                                        width=800,
-                                        alignment=ft.MainAxisAlignment.CENTER,
-                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                                ],
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                            ),
-                            expand=True,
-                            padding=15
-                        ),
-                        elevation=10,
-                        width=800,
-                    )
-                ],
-                expand=True,
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
-            )
+        err_col = ft.Column(
+            expand=True,
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            opacity=0,
+            animate_opacity=300
         )
+        page.add(err_col)
+        page.update()
+
+        err_col.controls = [
+            ft.Card(
+                ft.Container(
+                    ft.Column(
+                        [
+                            ft.Container(ft.Image(
+                                src=targets[target]['image'],
+                                fit=ft.ImageFit.CONTAIN,
+                                height=120,
+                                error_content=ft.ProgressRing()
+                            ),
+                            ),
+                            ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
+                            ft.Column([
+                                ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
+                            ],
+                                width=800,
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                    ),
+                    expand=True,
+                    padding=15
+                ),
+                elevation=10,
+                width=800,
+            )
+        ]
+
+        err_col.opacity = 1
+        page.update()
 
     def get_jury_link(e: ft.ControlEvent):
         page.set_clipboard(labels['elements']['bot_link'].format(e.control.data))
@@ -700,12 +745,19 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['data_updated'])
 
     def add_jury(e: ft.ControlEvent):
+        e.control.disabled = True
+        e.control.text = labels['buttons']['adding']
+        page.update()
+        time.sleep(0.5)
+
         pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
-        get_from_db(f"INSERT INTO jury (name, pass_phrase) VALUES ('{jury_name_field.value}', '{pass_phrase}')")
-        jury_name_field.value = ''
-        change_screen("main")
-        change_navbar_tab(2)
-        new_jury_card.content.content.controls[-1].controls[-1].disabled = True
+
+        sql_query = "INSERT INTO jury (name, pass_phrase) VALUES (%s, %s)"
+        if make_db_request(sql_query, (jury_name_field.value, pass_phrase,), put_many=False):
+            e.control.text = labels['buttons']['add']
+            jury_name_field.value = ''
+            change_screen("main")
+            change_navbar_tab(2)
 
     def get_update_params(e: ft.ControlEvent):
         param = e.control.data
@@ -855,58 +907,76 @@ def main(page: ft.Page):
 
     def delete_element(data):
         if not data[0].startswith('many'):
-            get_from_db(f"DELETE FROM {data[0]} WHERE {data[0]}_id = {data[1]}")
-            for index, card in enumerate(page.controls[-1].controls):
-                if card.data == int(data[1]):
-                    page.controls[-1].controls.pop(index)
-                    if len(page.controls[-1].controls) == 0:
-                        show_error('empty_list', labels['errors']['empty_list'])
-                    page.update()
-                    break
-            open_snackbar(labels['snack_bars']['element_deleted'])
+
+            sql_query = f"DELETE FROM {data[0]} WHERE {data[0]}_id = %s"
+            if make_db_request(sql_query, (data[1],), put_many=False):
+                for index, card in enumerate(page.controls[-1].controls):
+                    if card.data == int(data[1]):
+                        page.controls[-1].controls.pop(index)
+                        if len(page.controls[-1].controls) == 0:
+                            show_error('empty_list', labels['errors']['empty_list'])
+                        page.update()
+                        break
+                open_snackbar(labels['snack_bars']['element_deleted'])
         else:
             table = data[0].split('many')[-1]
-            get_from_db(f'TRUNCATE TABLE {table}')
-            if table == 'sgroups':
-                get_from_db("UPDATE topic SET status = 'free' WHERE status = 'busy'")
-                get_from_db(f'TRUNCATE TABLE participants')
-            time.sleep(1)
-            open_snackbar(labels['snack_bars']['table_deleted'])
+
+            sql_query = F"TRUNCATE TABLE {table}"
+            if make_db_request(sql_query, put_many=False):
+                if table == 'sgroups':
+                    sql_query = "UPDATE topic SET status = %s WHERE status = %s"
+                    make_db_request(sql_query, ('free', 'busy',), put_many=False)
+                    sql_query = "TRUNCATE TABLE participants"
+                    make_db_request(sql_query, put_many=False)
+                time.sleep(1)
+                open_snackbar(labels['snack_bars']['table_deleted'])
 
     def update_topic(e: ft.ControlEvent):
-        get_from_db(f"UPDATE topic SET description = '{topic_description.value}' WHERE topic_id = {e.control.data}")
-        close_dialog(edit_topic_dialog)
-        open_snackbar(labels['snack_bars']['data_edited'])
+
+        sql_query = "UPDATE topic SET description = %s WHERE topic_id = %s"
+        if make_db_request(sql_query, (topic_description.value, e.control.data,)):
+            close_dialog(edit_topic_dialog)
+            open_snackbar(labels['snack_bars']['data_edited'])
 
     def register(e):
+        btn_register.disabled = True
+        open_dialog(loading_dialog)
         sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
-        cur.execute(sql_query, (group_name_field.value,))
+        if make_db_request(sql_query, (group_name_field.value,), put_many=False):
 
-        sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
-        cur.execute(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain'))
+            sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
+            make_db_request(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain',), put_many=False)
 
-        cur.execute(f"SELECT group_id FROM sgroups WHERE name = '{group_name_field.value}'")
-        group_id = cur.fetchone()['group_id']
+            sql_query = "SELECT group_id FROM sgroups WHERE name = %s"
+            group_id = make_db_request(sql_query, (group_name_field.value,), get_many=False)['group_id']
 
-        cur.execute(f"UPDATE participants SET group_id = {group_id} WHERE telegram_id = {user_id}")
+            sql_query = "UPDATE participants SET group_id = %s WHERE telegram_id = %s"
+            make_db_request(sql_query, (group_id, user_id,), put_many=False)
 
-        cur.execute(f"SELECT participant_id FROM participants WHERE group_id = {group_id} and status = 'captain'")
-        captain_id = cur.fetchone()['participant_id']
+            sql_query = "SELECT participant_id FROM participants WHERE group_id = %s and status = %s"
+            captain_id = make_db_request(sql_query, (group_id, 'captain',), get_many=False)['participant_id']
 
-        cur.execute(f"UPDATE sgroups SET captain_id = {captain_id} WHERE group_id = {group_id}")
+            sql_query = "UPDATE sgroups SET captain_id = %s WHERE group_id = %s"
+            make_db_request(sql_query, (captain_id, group_id,), put_many=False)
 
-        sql_query = "INSERT INTO participants (group_id, telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s, %s)"
+            sql_query = "INSERT INTO participants (group_id, telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s, %s)"
 
-        participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
-        for i in range(0, len(participants), 2):
-            part = {}
-            part['name'] = participants[i].value
-            part['group'] = participants[i + 1].value
-            cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
+            participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
+            for i in range(0, len(participants), 2):
+                part = {}
+                part['name'] = participants[i].value
+                part['group'] = participants[i + 1].value
+                make_db_request(sql_query, (group_id, 0, part['name'], part['group'], 'part',), put_many=False)
 
-        cur.execute(f"UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != 'busy' ORDER BY RAND() LIMIT 1) WHERE group_id = {group_id}")
-        cur.execute(f"UPDATE topic SET status = 'busy' WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = {group_id})")
-        open_dialog(confirmation_registration_dialog)
+            sql_query = "UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != %s ORDER BY RAND() LIMIT 1) WHERE group_id = %s"
+            make_db_request(sql_query, ('busy', group_id,), put_many=False)
+
+            sql_query = "UPDATE topic SET status = %s WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = %s)"
+            make_db_request(sql_query, ('busy', group_id), put_many=False)
+            close_dialog(loading_dialog)
+            time.sleep(1)
+            open_dialog(confirmation_registration_dialog)
+        close_dialog(loading_dialog)
 
     def validate_registrationfields(e):
         fl = True
@@ -975,9 +1045,6 @@ def main(page: ft.Page):
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
     btn_register = ft.ElevatedButton(text="Зарегистрироваться", width=300, height=50, disabled=True, on_click=register)
 
-    def confirmed(e):
-        page.clean()
-
     confirmation_registration_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text("Регистрация", size=20, weight=ft.FontWeight.W_700),
@@ -996,7 +1063,6 @@ def main(page: ft.Page):
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            # width=350,
             height=200
         )
     )
@@ -1424,63 +1490,65 @@ def main(page: ft.Page):
 
         elif page_route == 'registration' and len(routes) == 3:
             user_id = routes[2]
-            user = get_from_db(f"SELECT * FROM participants WHERE telegram_id = {user_id}", many=True)
             page.scroll = ft.ScrollMode.ADAPTIVE
-            if len(user) == 0:
-                page.controls = [
-                    ft.Text(f'Telegram ID: {user_id}', size=16),
-                    ft.Card(
-                        ft.Container(
-                            ft.Column(
-                                [
-                                    ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=10)),
-                                    ft.Container(group_name_field)
-                                ],
-                                width=600,
+            sql_query = "SELECT * FROM participants WHERE telegram_id = %s"
+            user = make_db_request(sql_query, (user_id,), get_many=True)
+            if user is not None:
+                if len(user) == 0:
+                    page.controls = [
+                        ft.Text(f'Telegram ID: {user_id}', size=16),
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=10)),
+                                        ft.Container(group_name_field)
+                                    ],
+                                    width=600,
+                                ),
+                                padding=15
                             ),
-                            padding=15
+                            elevation=10
                         ),
-                        elevation=10
-                    ),
-                    ft.Card(
-                        ft.Container(
-                            ft.Column(
-                                [
-                                    ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=10)),
-                                    ft.Container(captain_name_field),
-                                    ft.Container(captain_group_field)
-                                ],
-                                width=600
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=10)),
+                                        ft.Container(captain_name_field),
+                                        ft.Container(captain_group_field)
+                                    ],
+                                    width=600
+                                ),
+                                padding=15
                             ),
-                            padding=15
+                            elevation=10
                         ),
-                        elevation=10
-                    ),
-                    ft.Card(
-                        ft.Container(
-                            ft.Column(
-                                [
-                                    ft.Row(
-                                        [
-                                            ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
-                                            btn_rem_part,
-                                            parts_count,
-                                            btn_add_part
+                        ft.Card(
+                            ft.Container(
+                                ft.Column(
+                                    [
+                                        ft.Row(
+                                            [
+                                                ft.Container(ft.Text("Участники", size=20, weight=ft.FontWeight.W_700), expand=True),
+                                                btn_rem_part,
+                                                parts_count,
+                                                btn_add_part
 
-                                        ]
-                                    ),
-                                    parts
-                                ],
-                                width=600,
+                                            ]
+                                        ),
+                                        parts
+                                    ],
+                                    width=600,
+                                ),
+                                padding=15
                             ),
-                            padding=15
+                            elevation=10
                         ),
-                        elevation=10
-                    ),
-                    ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
-                ]
-            else:
-                show_error('already_registered', labels['errors']['already_registered'])
+                        ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
+                    ]
+                else:
+                    show_error('already_registered', labels['errors']['already_registered'])
 
     page.update()
 
@@ -1489,7 +1557,7 @@ DEFAULT_FLET_PATH = ''
 DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
-    connection, cur = create_db_connection()
+    # connection, cur = create_db_connection()
     if platform.system() == 'Windows':
         ft.app(assets_dir='assets', target=main, use_color_emoji=True)
     else:

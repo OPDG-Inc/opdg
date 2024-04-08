@@ -1407,7 +1407,7 @@ def main(page: ft.Page):
         page_route = routes[1]
         if page_route == 'panel':
             page.scroll = None
-            change_screen("admin")
+            change_screen("login")
 
         elif page_route == 'registration' and len(routes) == 3:
             user_id = routes[2]

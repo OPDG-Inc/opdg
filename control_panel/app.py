@@ -573,8 +573,7 @@ def main(page: ft.Page):
         get_stats()
         # open_snackbar(labels['snack_bars']['data_updated'])
 
-    def goto_info():
-
+    def make_loading():
         db_status.value = labels['elements']['status_loading']
         app_ver.value = labels['elements']['status_loading']
         flask_status.value = labels['elements']['status_loading']
@@ -582,6 +581,8 @@ def main(page: ft.Page):
         disk_status.value = labels['elements']['status_loading']
         page.update()
 
+    def goto_info():
+        make_loading()
         get_app_info()
 
     def show_part_list(e: ft.ControlEvent):
@@ -684,6 +685,7 @@ def main(page: ft.Page):
 
     def reboot_service(e: ft.ControlEvent):
         e.control.visible = False
+        make_loading()
         scripts = {
             'db': {
                 'file': 'rebootmysql',

@@ -132,7 +132,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_app_info():
-
+        time.sleep(1)
         # flask
         try:
             response = requests.get(url='http://localhost:5000/check', timeout=3)
@@ -178,6 +178,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_groups():
+        time.sleep(0.5)
         statuses = {
             'waiting': {
                 'title': labels['statuses']['video_waiting'],
@@ -189,7 +190,9 @@ def main(page: ft.Page):
             }
         }
         # rr = ft.ResponsiveRow(columns=4)
-        rr = ft.ListView()
+        rr = ft.ListView(opacity=0, animate_opacity=200, width=800)
+        page.add(rr)
+        page.update()
 
         groups_list = get_from_db("SELECT * FROM sgroups", many=True)
         if len(groups_list) > 0:
@@ -259,15 +262,17 @@ def main(page: ft.Page):
                     data=group['group_id']
                 )
                 rr.controls.append(group_card)
-            page.add(rr)
         else:
             if elements.global_vars.DB_FAIL:
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
             else:
                 show_error('empty_groups', labels['errors']['empty_groups'])
+
+        rr.opacity = 1
         page.update()
 
     def get_topics():
+        time.sleep(0.5)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],
@@ -282,7 +287,7 @@ def main(page: ft.Page):
         }
 
         # rr = ft.ResponsiveRow(columns=3)
-        rr = ft.ListView()
+        rr = ft.ListView(animate_opacity=200, opacity=0, width=800)
 
         topics_list = get_from_db(f"SELECT * from topic", many=True)
         if len(topics_list) > 0:
@@ -326,7 +331,6 @@ def main(page: ft.Page):
                         ),
                         padding=15
                     ),
-                    width=200,
                     elevation=10,
                     col={"lg": 1},
                     data=topic['topic_id']
@@ -338,9 +342,13 @@ def main(page: ft.Page):
                 show_error('db_request', labels['errors']['db_request'].format(elements.global_vars.ERROR_TEXT))
             else:
                 show_error('empty_topics', labels['errors']['empty_topics'])
+
+        page.update()
+        rr.opacity = 1
         page.update()
 
     def get_jury():
+        time.sleep(0.5)
         statuses = {
             "waiting": {
                 "title": labels['statuses']['jury_waiting'],
@@ -354,7 +362,7 @@ def main(page: ft.Page):
             },
         }
         # rr = ft.ResponsiveRow(columns=4)
-        rr = ft.ListView()
+        rr = ft.ListView(opacity=0, animate_opacity=200, width=800)
         jury_list = get_from_db("SELECT * FROM jury", many=True)
         if len(jury_list) > 0:
             for jury in jury_list:
@@ -404,6 +412,10 @@ def main(page: ft.Page):
             else:
                 show_error('empty_jury', labels['errors']['empty_jury'])
 
+        page.update()
+        rr.opacity = 1
+        page.update()
+
     def show_error(target: str, description: str):
         page.scroll = None
         page.clean()
@@ -452,18 +464,18 @@ def main(page: ft.Page):
         open_dialog(edit_topic_dialog)
 
     def goto_stats():
-        time.sleep(1)
         get_stats()
         open_snackbar(labels['snack_bars']['data_updated'])
 
     def goto_info():
-        time.sleep(1)
+
         db_status.value = labels['elements']['status_loading']
         app_ver.value = labels['elements']['status_loading']
         flask_status.value = labels['elements']['status_loading']
         bot_status.value = labels['elements']['status_loading']
         disk_status.value = labels['elements']['status_loading']
         page.update()
+
         get_app_info()
 
     def show_part_list(e: ft.ControlEvent):
@@ -539,7 +551,7 @@ def main(page: ft.Page):
             elif tab_index == 3:
                 page.add(
                     ft.Container(
-                        content=ft.ResponsiveRow(
+                        content=ft.ListView(
                             [
                                 ft.Card(
                                     ft.Container(
@@ -667,8 +679,7 @@ def main(page: ft.Page):
                                     col={"lg": 1}
                                 )
                             ],
-                            columns=4,
-                            alignment=ft.MainAxisAlignment.START,
+                            width=800
                         )
                     )
                 )
@@ -828,6 +839,7 @@ def main(page: ft.Page):
         open_dialog(edit_params_dialog)
 
     def change_screen(target: str):
+        global current_tab_index
         page.navigation_bar = None
         page.floating_action_button = None
         page.clean()
@@ -846,6 +858,7 @@ def main(page: ft.Page):
         elif target == "main":
             page.appbar = appbar
             page.navigation_bar = navbar
+            current_tab_index = -1
             change_navbar_tab(page.navigation_bar.selected_index)
 
         elif target == "add_jury":
@@ -1290,7 +1303,7 @@ def main(page: ft.Page):
                         alignment=ft.MainAxisAlignment.END
                     )
                 ],
-                width=600,
+                width=800,
                 height=120
             ),
             padding=15
@@ -1312,7 +1325,7 @@ def main(page: ft.Page):
                                 new_topic_field,
                                 ft.Row([btn_add_topic], alignment=ft.MainAxisAlignment.END)
                             ],
-                            width=700
+                            # width=700
                         ),
                         padding=15
                     ),
@@ -1336,13 +1349,14 @@ def main(page: ft.Page):
                                 ),
 
                             ],
-                            width=700
+                            # width=700
                         ),
                         padding=15
                     ),
                     elevation=10
                 )
             ],
+            width=800,
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )

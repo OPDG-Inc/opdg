@@ -154,11 +154,11 @@ def main(page: ft.Page):
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     videos_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
 
-    app_ver = ft.Text(size=20, weight=ft.FontWeight.W_600)
-    db_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
-    flask_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
-    bot_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
-    disk_status = ft.Text(size=20, weight=ft.FontWeight.W_600)
+    app_ver = ft.Text(size=16, weight=ft.FontWeight.W_300)
+    db_status = ft.Text(size=16, weight=ft.FontWeight.W_300)
+    flask_status = ft.Text(size=16, weight=ft.FontWeight.W_300)
+    bot_status = ft.Text(size=16, weight=ft.FontWeight.W_300)
+    disk_status = ft.Text(size=16, weight=ft.FontWeight.W_300)
 
     def get_stats():
         if not elements.global_vars.DB_FAIL:
@@ -185,28 +185,36 @@ def main(page: ft.Page):
 
     def get_app_info():
         time.sleep(1)
-        # flask
-        try:
-            response = requests.get(url='http://localhost:5000/check')
-            if response.status_code == 200:
-                flask_status.value = labels['elements']['is_active']
-            else:
-                flask_status.value = labels['elements']['is_not_working'].format(response.status_code)
-        except requests.exceptions.ConnectionError:
-            flask_status.value = labels['elements']['is_disabled']
 
         # db
         sql_query = "SELECT COUNT(*) FROM topic"
         if make_db_request(sql_query, get_many=False):
             db_status.value = labels['elements']['is_active']
+            app_info_elements['db'].content.subtitle.controls[-1].visible = False
         else:
             db_status.value = labels['elements']['is_disabled']
+            app_info_elements['db'].content.subtitle.controls[-1].visible = True
+
+        # flask
+        try:
+            response = requests.get(url='http://localhost:5000/check')
+            if response.status_code == 200:
+                flask_status.value = labels['elements']['is_active']
+                app_info_elements['flask'].content.subtitle.controls[-1].visible = False
+            else:
+                flask_status.value = labels['elements']['is_not_working'].format(response.status_code)
+                app_info_elements['flask'].content.subtitle.controls[-1].visible = True
+        except requests.exceptions.ConnectionError:
+            flask_status.value = labels['elements']['is_disabled']
+            app_info_elements['flask'].content.subtitle.controls[-1].visible = True
 
         # bot
         if True:
             bot_status.value = labels['elements']['is_active']
+            app_info_elements['bot'].content.subtitle.controls[-1].visible = False
         else:
             bot_status.value = labels['elements']['is_disabled']
+            app_info_elements['bot'].content.subtitle.controls[-1].visible = True
 
         # disk
         headers = {
@@ -508,7 +516,7 @@ def main(page: ft.Page):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
         err_dialog = ft.AlertDialog(
-            title=ft.Row([ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _:close_dialog(err_dialog))], expand=True, alignment=ft.MainAxisAlignment.END),
+            title=ft.Row([ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(err_dialog))], expand=True, alignment=ft.MainAxisAlignment.END),
             modal=True,
             actions_alignment=ft.MainAxisAlignment.END,
             # actions=[ft.ElevatedButton("Закрыть", icon=ft.icons.CLOSE_ROUNDED, on_click=lambda _:close_dialog(err_dialog))],
@@ -670,6 +678,40 @@ def main(page: ft.Page):
             ),
             subtitle=ft.Column(
                 [descr]
+            ),
+        )
+        return ft.Container(tile, margin=ft.margin.only(top=-15))
+
+    def reboot_service(e: ft.ControlEvent):
+        scripts = {
+            'db': {
+                'file': 'rebootmysql',
+                'name': labels['titles']['db_status']
+            },
+            'flask': {
+                'file': 'rebootflash',
+                'name': labels['titles']['flask_status']
+            },
+            'bot': {
+                'file': 'rebootbot',
+                'name': labels['titles']['bot_status']
+            }
+        }
+        subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
+        open_loading_snackbar(f"{scripts[scripts[e.control.data]['name']]} перезагружается")
+        time.sleep(3)
+        goto_info()
+
+    def app_info_title(title: str, descr: ft.Text, btn_data):
+        tile = ft.ListTile(
+            title=ft.Row(
+                [ft.Text(title, size=18, font_family="Geologica", weight=ft.FontWeight.W_400)]
+            ),
+            subtitle=ft.Row(
+                [
+                    descr,
+                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=reboot_service, visible=False, tooltip="Перезагрузка сервиса")
+                ]
             ),
         )
         return ft.Container(tile, margin=ft.margin.only(top=-15))
@@ -916,12 +958,12 @@ def main(page: ft.Page):
         dialog.open = False
         page.update()
 
-    def get_current_commit_hash():
-        try:
-            result = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
-            return result.stdout.decode('utf-8').strip()[:7]
-        except Exception as e:
-            return e
+    # def get_current_commit_hash():
+    #     try:
+    #         result = subprocess.run(['git', 'rev-parse', 'HEAD'], stdout=subprocess.PIPE)
+    #         return result.stdout.decode('utf-8').strip()[:7]
+    #     except Exception as e:
+    #         return e
 
     def confirm_delete(e: ft.ControlEvent):
         confirmation_dialog.actions[-1].data = e.control.data
@@ -1322,6 +1364,14 @@ def main(page: ft.Page):
         elevation=10
     )
 
+    app_info_elements = {
+        'app_ver': statistic_tile(labels['titles']['app_ver'], app_ver),
+        'db': app_info_title(labels['titles']['db_status'], db_status, 'db'),
+        'flask': app_info_title(labels['titles']['flask_status'], flask_status, 'flask'),
+        'bot': app_info_title(labels['titles']['bot_status'], bot_status, 'bot'),
+        'yadisk': statistic_tile(labels['titles']['disk_status'], disk_status),
+    }
+
     settings_col = ft.ListView(
         [
             ft.Card(
@@ -1436,11 +1486,11 @@ def main(page: ft.Page):
                                 ),
                                 margin=ft.margin.only(bottom=20)
                             ),
-                            statistic_tile(labels['titles']['app_ver'], app_ver),
-                            statistic_tile(labels['titles']['db_status'], db_status),
-                            statistic_tile(labels['titles']['flask_status'], flask_status),
-                            statistic_tile(labels['titles']['bot_status'], bot_status),
-                            statistic_tile(labels['titles']['disk_status'], disk_status),
+                            app_info_elements['app_ver'],
+                            app_info_elements['db'],
+                            app_info_elements['flask'],
+                            app_info_elements['bot'],
+                            app_info_elements['yadisk'],
                         ]
                     ),
                     padding=15
@@ -1507,13 +1557,13 @@ def main(page: ft.Page):
         )
     )
 
-    vertext = ft.Text(
-        value=None,
-        text_align=ft.TextAlign.START,
-        size=16
-    )
+    # vertext = ft.Text(
+    #     value=None,
+    #     text_align=ft.TextAlign.START,
+    #     size=16
+    # )
 
-    vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
+    # vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if platform.system() == "Windows":
         page.route = '/panel'

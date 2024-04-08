@@ -94,9 +94,9 @@ labels = {
         'video_count': "Загружено видео",
         'info': "Состояние системы",
         'app_ver': "Версия",
-        'db_status': "Статус БД",
-        'flask_status': "Статус Flask",
-        'bot_status': "Статус бота",
+        'db_status': "База данных",
+        'flask_status': "Flask-сервер",
+        'bot_status': "Telegram-бот",
         'disk_status': "Яндекс.Диск",
     },
     'statuses': {

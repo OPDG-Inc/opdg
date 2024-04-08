@@ -109,14 +109,17 @@ def main(page: ft.Page):
 
     def get_from_db(request_text: str, many=False):
         try:
+            connection, cur = create_db_connection()
             cur.execute(request_text)
+            if many:
+                return cur.fetchall()
+            else:
+                return cur.fetchone()
+            connection.close()
         except sql_error as e:
             elements.global_vars.ERROR_TEXT = str(e)
             elements.global_vars.DB_FAIL = True
-        if many:
-            return cur.fetchall()
-        else:
-            return cur.fetchone()
+
 
     group_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
     part_count = ft.Text(size=20, weight=ft.FontWeight.W_600)
@@ -152,9 +155,15 @@ def main(page: ft.Page):
             flask_status.value = labels['elements']['is_disabled']
 
         # db
-        if connection.is_connected():
-            db_status.value = labels['elements']['is_active']
-        else:
+        try:
+            connection, cur = create_db_connection()
+            if connection.is_connected():
+                db_status.value = labels['elements']['is_active']
+            else:
+                db_status.value = labels['elements']['is_disabled']
+        except sql_error as e:
+            elements.global_vars.DB_FAIL = True
+            elements.global_vars.ERROR_TEXT = str(e)
             db_status.value = labels['elements']['is_disabled']
 
         # bot
@@ -879,34 +888,39 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['data_edited'])
 
     def register(e):
-        sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
-        cur.execute(sql_query, (group_name_field.value,))
+        try:
+            connection, cur = create_db_connection()
+            sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
+            cur.execute(sql_query, (group_name_field.value,))
 
-        sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
-        cur.execute(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain'))
+            sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
+            cur.execute(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain'))
 
-        cur.execute(f"SELECT group_id FROM sgroups WHERE name = '{group_name_field.value}'")
-        group_id = cur.fetchone()['group_id']
+            cur.execute(f"SELECT group_id FROM sgroups WHERE name = '{group_name_field.value}'")
+            group_id = cur.fetchone()['group_id']
 
-        cur.execute(f"UPDATE participants SET group_id = {group_id} WHERE telegram_id = {user_id}")
+            cur.execute(f"UPDATE participants SET group_id = {group_id} WHERE telegram_id = {user_id}")
 
-        cur.execute(f"SELECT participant_id FROM participants WHERE group_id = {group_id} and status = 'captain'")
-        captain_id = cur.fetchone()['participant_id']
+            cur.execute(f"SELECT participant_id FROM participants WHERE group_id = {group_id} and status = 'captain'")
+            captain_id = cur.fetchone()['participant_id']
 
-        cur.execute(f"UPDATE sgroups SET captain_id = {captain_id} WHERE group_id = {group_id}")
+            cur.execute(f"UPDATE sgroups SET captain_id = {captain_id} WHERE group_id = {group_id}")
 
-        sql_query = "INSERT INTO participants (group_id, telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s, %s)"
+            sql_query = "INSERT INTO participants (group_id, telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s, %s)"
 
-        participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
-        for i in range(0, len(participants), 2):
-            part = {}
-            part['name'] = participants[i].value
-            part['group'] = participants[i + 1].value
-            cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
+            participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
+            for i in range(0, len(participants), 2):
+                part = {}
+                part['name'] = participants[i].value
+                part['group'] = participants[i + 1].value
+                cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
 
-        cur.execute(f"UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != 'busy' ORDER BY RAND() LIMIT 1) WHERE group_id = {group_id}")
-        cur.execute(f"UPDATE topic SET status = 'busy' WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = {group_id})")
-        open_dialog(confirmation_registration_dialog)
+            cur.execute(f"UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != 'busy' ORDER BY RAND() LIMIT 1) WHERE group_id = {group_id}")
+            cur.execute(f"UPDATE topic SET status = 'busy' WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = {group_id})")
+            open_dialog(confirmation_registration_dialog)
+        except sql_error as e:
+            elements.global_vars.DB_FAIL = True
+            elements.global_vars.ERROR_TEXT = str(e)
 
     def validate_registrationfields(e):
         fl = True
@@ -1489,7 +1503,7 @@ DEFAULT_FLET_PATH = ''
 DEFAULT_FLET_PORT = 8502
 
 if __name__ == "__main__":
-    connection, cur = create_db_connection()
+    # connection, cur = create_db_connection()
     if platform.system() == 'Windows':
         ft.app(assets_dir='assets', target=main, use_color_emoji=True)
     else:

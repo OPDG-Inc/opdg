@@ -893,7 +893,7 @@ def main(page: ft.Page):
             part['group'] = participants[i + 1].value
             cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
 
-        cur.execute(f"DELETE FROM registration WHERE user_id = '{user_id}'")
+        cur.execute(f"UPDATE sgroups SET topic_id = (SELECT * FROM topic WHERE status != 'busy' ORDER BY RAND() LIMIT 1) WHERE group_id = {group_id}")
         open_dialog(confirmation_registration_dialog)
 
     def validate_registrationfields(e):

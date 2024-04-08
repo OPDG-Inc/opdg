@@ -428,7 +428,7 @@ def main(page: ft.Page):
 
     def show_error(target: str, description: str):
         page.scroll = None
-        page.clean()
+        page.controls.clear()
         page.add(
             ft.Column(
                 controls=[

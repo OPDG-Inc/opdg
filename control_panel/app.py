@@ -698,7 +698,7 @@ def main(page: ft.Page):
             }
         }
         subprocess.run(['/bin/bash', f"/root/scripts/{scripts[e.control.data]['file']}.sh"])
-        open_loading_snackbar(f"{scripts[scripts[e.control.data]['name']]} перезагружается")
+        open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")
         time.sleep(3)
         goto_info()
 

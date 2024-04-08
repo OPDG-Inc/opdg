@@ -821,7 +821,9 @@ def main(page: ft.Page):
         param = e.control.data
         update_env_var(param, param_field.value)
         close_dialog(edit_params_dialog)
-        open_snackbar(labels['snack_bars']['data_updated'])
+        time.sleep(0.5)
+        open_dialog(reboot_dialog)
+        # open_snackbar(labels['snack_bars']['data_updated'])
 
     def add_jury(e: ft.ControlEvent):
         e.control.disabled = True
@@ -1127,6 +1129,22 @@ def main(page: ft.Page):
     parts_count = ft.Text('1', size=16, weight=ft.FontWeight.W_400)
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
     btn_register = ft.ElevatedButton(text="Зарегистрироваться", width=300, height=50, disabled=True, on_click=register)
+
+    reboot_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Text("Перезагрузка", size=20, weight=ft.FontWeight.W_700),
+        actions_alignment=ft.MainAxisAlignment.END,
+        actions=[ft.ElevatedButton('Перезагрузить', icon=ft.icons.UPDATE_ROUNDED, on_click=reboot_service, data='controlpanel')],
+        content=ft.Column(
+            [
+                ft.Text("Для того, чтобы изменение параметра вступило в силу, необходимо перезагрузить панель управления. Это также затронет страницу регистрации", size=18, text_align=ft.TextAlign.START)
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            height=200,
+            width=350
+        )
+    )
 
     confirmation_registration_dialog = ft.AlertDialog(
         modal=True,

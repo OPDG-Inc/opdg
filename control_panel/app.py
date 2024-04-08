@@ -473,8 +473,8 @@ def main(page: ft.Page):
         page.update()
 
     def show_error(target: str, description: str):
-        page.scroll = None
-        page.controls.clear()
+        # page.scroll = None
+        # page.controls.clear()
         err_col = ft.Column(
             expand=True,
             alignment=ft.MainAxisAlignment.CENTER,
@@ -482,42 +482,72 @@ def main(page: ft.Page):
             opacity=0,
             animate_opacity=300
         )
-        page.add(err_col)
-        page.update()
-
-        err_col.controls = [
-            ft.Card(
-                ft.Container(
-                    ft.Column(
-                        [
-                            ft.Container(ft.Image(
-                                src=targets[target]['image'],
-                                fit=ft.ImageFit.CONTAIN,
-                                height=120,
-                                error_content=ft.ProgressRing()
-                            ),
-                            ),
-                            ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
-                            ft.Column([
-                                ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
-                            ],
-                                width=800,
-                                alignment=ft.MainAxisAlignment.CENTER,
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER
-                    ),
-                    expand=True,
-                    padding=15
+        # page.add(err_col)
+        # page.update()
+        col = ft.Column(
+            [
+                ft.Container(ft.Image(
+                    src=targets[target]['image'],
+                    fit=ft.ImageFit.CONTAIN,
+                    height=100,
+                    error_content=ft.ProgressRing()
                 ),
-                elevation=10,
-                width=800,
-            )
-        ]
+                ),
+                ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
+                ft.Column([
+                    ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
+                ],
+                    width=600,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            ],
+            width=600,
+            height=230,
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        )
+        err_dialog = ft.AlertDialog(
+            title=ft.Row([ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _:close_dialog(err_dialog))], expand=True, alignment=ft.MainAxisAlignment.END),
+            modal=True,
+            actions_alignment=ft.MainAxisAlignment.END,
+            # actions=[ft.ElevatedButton("Закрыть", icon=ft.icons.CLOSE_ROUNDED, on_click=lambda _:close_dialog(err_dialog))],
+            content=col
+        )
 
-        err_col.opacity = 1
-        page.update()
+        open_dialog(err_dialog)
+        # err_col.controls = [
+        #     ft.Card(
+        #         ft.Container(
+        #             ft.Column(
+        #                 [
+        #                     ft.Container(ft.Image(
+        #                         src=targets[target]['image'],
+        #                         fit=ft.ImageFit.CONTAIN,
+        #                         height=120,
+        #                         error_content=ft.ProgressRing()
+        #                     ),
+        #                     ),
+        #                     ft.Text(targets[target]['title'], size=20, font_family="Geologica", weight=ft.FontWeight.W_500),
+        #                     ft.Column([
+        #                         ft.Text(description, size=18, font_family="Geologica", text_align=ft.TextAlign.CENTER)
+        #                     ],
+        #                         width=800,
+        #                         alignment=ft.MainAxisAlignment.CENTER,
+        #                         horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+        #                 ],
+        #                 alignment=ft.MainAxisAlignment.CENTER,
+        #                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        #             ),
+        #             expand=True,
+        #             padding=15
+        #         ),
+        #         elevation=10,
+        #         width=800,
+        #     )
+        # ]
+
+        # err_col.opacity = 1
+        # page.update()
 
     def get_jury_link(e: ft.ControlEvent):
         page.set_clipboard(labels['elements']['bot_link'].format(e.control.data))

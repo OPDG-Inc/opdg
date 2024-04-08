@@ -518,7 +518,7 @@ def main(page: ft.Page):
 
         if tab_index != current_tab_index:
             current_tab_index = page.navigation_bar.selected_index
-            page.clean()
+            page.controls.clear()
             page.appbar.actions.clear()
 
             appbar.leading = ft.IconButton(

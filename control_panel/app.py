@@ -710,7 +710,7 @@ def main(page: ft.Page):
             subtitle=ft.Row(
                 [
                     descr,
-                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=reboot_service, visible=False, tooltip="Перезагрузка сервиса")
+                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=reboot_service, visible=False, tooltip="Перезагрузка сервиса", data=btn_data)
                 ]
             ),
         )

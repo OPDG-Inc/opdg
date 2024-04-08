@@ -80,6 +80,7 @@ labels = {
         'topic_added': "Тема добавлена"
     },
     'titles': {
+        'control_panel': 'Панель',
         'removing_data': "Удаление данных",
         'auth': "Авторизация",
         'single_add': "Одиночное добавление",

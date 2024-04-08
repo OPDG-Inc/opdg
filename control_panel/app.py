@@ -697,6 +697,10 @@ def main(page: ft.Page):
             'bot': {
                 'file': 'rebootbot',
                 'name': labels['titles']['bot_status']
+            },
+            'controlpanel': {
+                'file': 'controlupdate',
+                'name': labels['titles']['control_panel']
             }
         }
         open_loading_snackbar(f"{scripts[e.control.data]['name']} перезагружается")

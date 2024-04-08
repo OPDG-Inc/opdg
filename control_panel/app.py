@@ -475,7 +475,7 @@ def main(page: ft.Page):
 
     def goto_stats():
         get_stats()
-        open_snackbar(labels['snack_bars']['data_updated'])
+        # open_snackbar(labels['snack_bars']['data_updated'])
 
     def goto_info():
 
@@ -934,7 +934,7 @@ def main(page: ft.Page):
         page.update()
 
     def rem_part(e: ft.ControlEvent):
-        if len(parts) > 3:
+        if len(parts.controls) > 3:
             for _ in range(3):
                 parts.controls.pop()
             btn_add_part.disabled = False
@@ -961,7 +961,7 @@ def main(page: ft.Page):
     btn_add_part = ft.IconButton(ft.icons.ADD_ROUNDED, on_click=add_part, tooltip="Добавить участника")
     parts_count = ft.Text('1', size=16, weight=ft.FontWeight.W_400)
     btn_rem_part = ft.IconButton(ft.icons.REMOVE_ROUNDED, on_click=rem_part, tooltip="Удалить участника", disabled=True)
-    btn_register = ft.ElevatedButton(content=ft.Text("Зарегистрироваться", size=16, weight=ft.FontWeight.W_400), expand=False, disabled=True, on_click=register)
+    btn_register = ft.ElevatedButton(text="Зарегистрироваться",width=300, height=50, disabled=True, on_click=register)
 
     def confirmed(e):
         page.clean()
@@ -972,17 +972,19 @@ def main(page: ft.Page):
         actions_alignment=ft.MainAxisAlignment.END,
         actions=[
             ft.ElevatedButton(
-                "Открыть бот",
+                "Вернуться",
                 icon=ft.icons.TELEGRAM_ROUNDED,
-                url="https://t.me/lrrrtm",
+                url="https://t.me/lrrrtm_testing_bot",
                 on_click=confirmed
             ),
         ],
         content=ft.Column(
             [
-                ft.Text("Твоя команда успешно зарегистрирована, ты можешь возвращаться к боту", size=18)
+                ft.Text("Твоя команда успешно зарегистрирована, ты можешь возвращаться обратно к боту", size=18, text_align=ft.TextAlign.CENTER)
             ],
-            width=350,
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            # width=350,
             height=200
         )
     )
@@ -1396,20 +1398,19 @@ def main(page: ft.Page):
     vertext.value = labels['elements']['app_version'].format(get_current_commit_hash())
 
     if platform.system() == "Windows":
-        page.route = '/panel'
+        page.route = f'/registration/{random.randint(1000, 10000)}'
 
-    # get_stats()
-    # get_app_info()
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
     else:
-        route = str(page.route).split("/")[1]
-        if route == 'panel':
+        routes = str(page.route).split("/")
+        page_route = routes[1]
+        if page_route == 'panel':
             page.scroll = None
-            change_screen("main")
+            change_screen("admin")
 
-        elif route == 'registration':
-            user_id = str(page.route).split("/")[2]
+        elif page_route == 'registration' and len(routes) == 3:
+            user_id = routes[2]
             user = get_from_db(f"SELECT * FROM participants WHERE telegram_id = {user_id}", many=True)
             page.scroll = ft.ScrollMode.ADAPTIVE
             if len(user) == 0:
@@ -1419,7 +1420,7 @@ def main(page: ft.Page):
                         ft.Container(
                             ft.Column(
                                 [
-                                    ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=20)),
+                                    ft.Container(title_text('Команда'), margin=ft.margin.only(bottom=10)),
                                     ft.Container(group_name_field)
                                 ],
                                 width=600,
@@ -1432,7 +1433,7 @@ def main(page: ft.Page):
                         ft.Container(
                             ft.Column(
                                 [
-                                    ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=20)),
+                                    ft.Container(title_text('Капитан'), margin=ft.margin.only(bottom=10)),
                                     ft.Container(captain_name_field),
                                     ft.Container(captain_group_field)
                                 ],

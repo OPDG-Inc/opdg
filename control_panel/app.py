@@ -900,6 +900,7 @@ def main(page: ft.Page):
             cur.execute(sql_query, (group_id, 0, part['name'], part['group'], 'part',))
 
         cur.execute(f"UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != 'busy' ORDER BY RAND() LIMIT 1) WHERE group_id = {group_id}")
+        cur.execute(f"UPDATE topic SET status = 'busy' WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = {group_id})")
         open_dialog(confirmation_registration_dialog)
 
     def validate_registrationfields(e):
@@ -975,15 +976,15 @@ def main(page: ft.Page):
     confirmation_registration_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text("Регистрация", size=20, weight=ft.FontWeight.W_700),
-        actions_alignment=ft.MainAxisAlignment.END,
-        actions=[
-            ft.ElevatedButton(
-                "Вернуться",
-                icon=ft.icons.TELEGRAM_ROUNDED,
-                url="https://t.me/lrrrtm_testing_bot",
-                on_click=confirmed
-            ),
-        ],
+        # actions_alignment=ft.MainAxisAlignment.END,
+        # actions=[
+        #     ft.ElevatedButton(
+        #         "Вернуться",
+        #         icon=ft.icons.TELEGRAM_ROUNDED,
+        #         url="https://t.me/lrrrtm_testing_bot",
+        #         on_click=confirmed
+        #     ),
+        # ],
         content=ft.Column(
             [
                 ft.Text("Твоя команда успешно зарегистрирована, ты можешь возвращаться обратно к боту", size=18, text_align=ft.TextAlign.CENTER)

@@ -23,4 +23,9 @@ screens = {
         "lead_icon": icons.ARROW_BACK_ROUNDED,
         "target": "main"
     },
+    "view_group": {
+        'title': "Обзор группы",
+        "lead_icon": icons.ARROW_BACK_ROUNDED,
+        "target": "main"
+    }
 }

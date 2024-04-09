@@ -67,8 +67,8 @@ def main(page: ft.Page):
     }
     settings_subtitle_weight = ft.FontWeight.W_400
 
-    page.window_width = 377
-    page.window_height = 768
+    # page.window_width = 377
+    # page.window_height = 768
 
     cache_ttl = 180
     cache_topics = TTLCache(maxsize=1000, ttl=cache_ttl)
@@ -304,22 +304,10 @@ def main(page: ft.Page):
                 for group in groups_list:
 
                     sql_query = "SELECT * FROM topic WHERE topic_id = %s"
-                    # topic_info = make_db_request(sql_query, , get_many=False)
                     topic_info = request_topic_info(sql_query, (group['topic_id'],))
 
                     sql_query = "SELECT * FROM participants WHERE group_id = %s"
                     participants_info = request_group_parts(sql_query, (group['group_id'],))
-                    # participants_info = make_db_request(sql_query, (group['group_id'],), get_many=True)
-
-                    participants_panel = ft.ExpansionTile(
-                        title=ft.Text(labels['titles']['participants_panel'], size=18),
-                        affinity=ft.TileAffinity.LEADING,
-                    )
-                    for part in participants_info:
-                        participants_panel.controls.append(
-                            ft.ListTile(title=ft.Text(f"{part['name']} ({part['study_group']})", size=18,
-                                                      text_align=ft.TextAlign.START))
-                        )
 
                     group_card = ft.Card(
                         ft.Container(
@@ -337,14 +325,15 @@ def main(page: ft.Page):
                                         margin=ft.margin.only(top=-20),
                                         visible=not statuses[group['video_status']]['flag']
                                     ),
-                                    ft.ResponsiveRow(
+                                    ft.Row(
                                         [
-                                            ft.ElevatedButton(
-                                                text=labels['buttons']['group_part'],
+                                            ft.IconButton(
+                                                # text=labels['buttons']['group_part'],
                                                 icon=ft.icons.GROUPS_ROUNDED,
                                                 bgcolor=ft.colors.PRIMARY_CONTAINER,
                                                 data=participants_info,
                                                 on_click=show_part_list,
+                                                # on_click=lambda _: change_screen('view_group'),
                                                 col={"lg": 1}
                                             ),
                                             ft.ElevatedButton(
@@ -357,8 +346,7 @@ def main(page: ft.Page):
                                             ),
 
                                         ],
-                                        columns=2,
-                                        alignment=ft.MainAxisAlignment.END,
+                                        alignment=ft.MainAxisAlignment.START,
                                     ),
                                 ],
                             ),
@@ -537,8 +525,10 @@ def main(page: ft.Page):
                     error_content=ft.ProgressRing()
                 ),
                 ),
-                ft.Text(targets[target]['title'], size=20, weight=ft.FontWeight.W_400),
-                ft.Row([
+                ft.Column(
+                    [ft.Text(targets[target]['title'], size=20, weight=ft.FontWeight.W_400)]
+                ),
+                ft.Column([
                     ft.Text(description, size=18, text_align=ft.TextAlign.CENTER)
                 ],
                     width=600,
@@ -600,7 +590,7 @@ def main(page: ft.Page):
         # }
         part_list = e.control.data
         participants_dialog.content = ft.Column(
-            width=500,
+            width=700,
             height=300,
             scroll=ft.ScrollMode.ADAPTIVE
         )
@@ -912,6 +902,11 @@ def main(page: ft.Page):
             page.navigation_bar = navbar
             page.add(new_jury_card)
 
+        elif target == "view_group":
+            page.navigation_bar = navbar
+            # page.navigation_bar.selected_index = -1
+            page.add(get_title_text('Тест'))
+
         elif target == "import_themes":
             page.navigation_bar = navbar
 
@@ -1185,7 +1180,7 @@ def main(page: ft.Page):
                 ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(participants_dialog))
             ]
         ),
-        content=ft.Column(
+        content=ft.ListView(
             height=300,
             width=600
         ),

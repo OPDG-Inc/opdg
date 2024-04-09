@@ -61,7 +61,6 @@ labels = {
         'login': "Войти",
         'update_project': "Обновить проект",
         'copy_code': "Копировать код",
-        'video_link': "Открыть видео",
         'upload': "Открыть форму",
         'edit_token': "Изменить токен",
         'edit_password': "Изменить пароль",
@@ -115,8 +114,8 @@ labels = {
         'topic_busy': "Занята",
         'jury_waiting': "Ожидание",
         'jury_registered': "Зарегистрирован",
-        'video_waiting': "Открыть видео",
-        'video_uploaded': "Открыть видео",
+        'video_waiting': "Ожидаем видео",
+        'video_uploaded': "Видео",
         'oauth_token': "OAuth-токен",
         'bot_token': "Bot-токен",
         'password': "Пароль"

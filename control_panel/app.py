@@ -275,7 +275,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_groups():
-        # time.sleep(0.5)
+        time.sleep(0.5)
         statuses = {
             'waiting': {
                 'title': labels['statuses']['video_waiting'],
@@ -373,7 +373,7 @@ def main(page: ft.Page):
         page.update()
 
     def get_topics():
-        # time.sleep(0.5)
+        time.sleep(0.5)
         statuses = {
             "free": {
                 "title": labels['statuses']['topic_free'],

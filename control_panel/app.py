@@ -274,7 +274,7 @@ def main(page: ft.Page):
 
         page.update()
 
-    def get_groups():
+    def get_groups(force_update: bool = False):
         time.sleep(0.5)
         statuses = {
             'waiting': {
@@ -295,7 +295,10 @@ def main(page: ft.Page):
         page.update()
 
         sql_query = "SELECT * FROM sgroups"
-        groups_list = request_groups(sql_query)
+        if force_update:
+            groups_list = make_db_request(sql_query, get_many=True)
+        else:
+            groups_list = request_groups(sql_query)
         if groups_list is not None:
             if len(groups_list) > 0:
                 for group in groups_list:
@@ -372,7 +375,7 @@ def main(page: ft.Page):
 
         page.update()
 
-    def get_topics():
+    def get_topics(force_update: bool = False):
         time.sleep(0.5)
         statuses = {
             "free": {
@@ -396,7 +399,10 @@ def main(page: ft.Page):
         page.update()
 
         sql_query = "SELECT * from topic"
-        topics_list = request_topic(sql_query)
+        if force_update:
+            topics_list = make_db_request(sql_query, get_many=True)
+        else:
+            topics_list = request_topic(sql_query)
         if topics_list is not None:
             if len(topics_list) > 0:
                 busy_count = 0
@@ -450,8 +456,8 @@ def main(page: ft.Page):
 
         page.update()
 
-    def get_jury():
-        # time.sleep(0.5)
+    def get_jury(force_update: bool = False):
+        time.sleep(0.5)
         statuses = {
             "waiting": {
                 "title": labels['statuses']['jury_waiting'],
@@ -467,7 +473,10 @@ def main(page: ft.Page):
         rr = ft.ListView(opacity=0, animate_opacity=300, width=800)
 
         sql_query = "SELECT * FROM jury"
-        jury_list = request_jury(sql_query)
+        if force_update:
+            jury_list = make_db_request(sql_query, get_many=True)
+        else:
+            jury_list = request_jury(sql_query)
         if jury_list is not None:
             if len(jury_list) > 0:
                 for jury in jury_list:

@@ -19,6 +19,7 @@ from functions import load_config_file, update_config_file
 from elements.screens import screens
 from elements.tabs import tabs_config
 from elements.errors_targets import targets
+# from .. import yadiskapi
 
 import elements.global_vars
 from elements.text import labels
@@ -31,6 +32,8 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
 
+
+# yandex = yadiskapi.YandexAPI(os.getenv('YANDEX_BASE_URL'), os.getenv('OAUTH_TOKEN'))
 
 def create_db_connection():
     try:
@@ -302,7 +305,6 @@ def main(page: ft.Page):
         if groups_list is not None:
             if len(groups_list) > 0:
                 for group in groups_list:
-
                     sql_query = "SELECT * FROM topic WHERE topic_id = %s"
                     topic_info = request_topic_info(sql_query, (group['topic_id'],))
 

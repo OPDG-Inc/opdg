@@ -1,28 +1,28 @@
 import datetime
 import hashlib
+import logging
 import os
 import platform
 import random
 import subprocess
 import time
 import uuid
-import logging
 
 import flet as ft
 import flet_core
 import requests
-from mysql.connector import connect, Error as sql_error
 from cachetools import cached, TTLCache
 from dotenv import load_dotenv
-
-from functions import load_config_file, update_config_file
-from elements.screens import screens
-from elements.tabs import tabs_config
-from elements.errors_targets import targets
-# from .. import yadiskapi
+from mysql.connector import connect, Error as sql_error
 
 import elements.global_vars
+from elements.errors_targets import targets
+from elements.screens import screens
+from elements.tabs import tabs_config
 from elements.text import labels
+from functions import load_config_file, update_config_file
+
+# from .. import yadiskapi
 
 current_tab_index = -1
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -248,11 +248,14 @@ def main(page: ft.Page):
             app_info_elements['flask'].content.subtitle.controls[-1].visible = True
 
         # bot
-        if True:
+        response = requests.get(url=f"https://api.telegram.org/bot{str(os.getenv('BOT_TOKEN'))}/getMe")
+        print(response.url)
+        print(response.json())
+        if response.json()['ok']:
             bot_status.value = labels['elements']['is_active']
             app_info_elements['bot'].content.subtitle.controls[-1].visible = False
         else:
-            bot_status.value = labels['elements']['is_disabled']
+            bot_status.value = labels['elements']['is_not_working'].format(response.status_code)
             app_info_elements['bot'].content.subtitle.controls[-1].visible = True
 
         # disk
@@ -1695,8 +1698,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        # page.route = '/panel'
-        page.route = f'/registration/{409801981}'
+        page.route = '/panel'
+        # page.route = f'/registration/{409801981}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

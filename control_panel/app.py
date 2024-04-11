@@ -54,6 +54,19 @@ def create_db_connection():
         return None, None
 
 
+def check_systemd(service_name: str) -> bool():
+    command = ['/usr/bin/systemctl', 'status', f'{service_name}.service']
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, error = process.communicate()
+    if process.returncode == 0:
+        text = output.decode()
+        if text[text.find('Active:') + 8:].split()[0] == 'active':
+            return True
+        return False
+    else:
+        return False
+
+
 def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.START,
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -226,32 +239,37 @@ def main(page: ft.Page):
         time.sleep(1)
 
         # db
-        sql_query = "SELECT COUNT(*) FROM topic"
-        if make_db_request(sql_query, get_many=False):
-            db_status.value = labels['elements']['is_active']
-            app_info_elements['db'].content.subtitle.controls[-1].visible = False
+        if check_systemd('mysql'):
+            sql_query = "SELECT COUNT(*) FROM topic"
+            if make_db_request(sql_query, get_many=False):
+                db_status.value = labels['elements']['is_active']
+                app_info_elements['db'].content.subtitle.controls[-1].visible = False
+            else:
+                db_status.value = labels['elements']['is_disabled']
+                app_info_elements['db'].content.subtitle.controls[-1].visible = True
         else:
             db_status.value = labels['elements']['is_disabled']
             app_info_elements['db'].content.subtitle.controls[-1].visible = True
 
         # flask
-        try:
-            response = requests.get(url='http://localhost:5000/check')
-            if response.status_code == 200:
-                flask_status.value = labels['elements']['is_active']
-                app_info_elements['flask'].content.subtitle.controls[-1].visible = False
-            else:
-                flask_status.value = labels['elements']['is_not_working'].format(response.status_code)
+        if check_systemd('flask_yandex'):
+            try:
+                response = requests.get(url='http://localhost:5000/check')
+                if response.status_code == 200:
+                    flask_status.value = labels['elements']['is_active']
+                    app_info_elements['flask'].content.subtitle.controls[-1].visible = False
+                else:
+                    flask_status.value = labels['elements']['is_not_working'].format(response.status_code)
+                    app_info_elements['flask'].content.subtitle.controls[-1].visible = True
+            except requests.exceptions.ConnectionError:
+                flask_status.value = labels['elements']['is_disabled']
                 app_info_elements['flask'].content.subtitle.controls[-1].visible = True
-        except requests.exceptions.ConnectionError:
+        else:
             flask_status.value = labels['elements']['is_disabled']
             app_info_elements['flask'].content.subtitle.controls[-1].visible = True
 
         # bot
-        response = requests.get(url=f"https://api.telegram.org/bot{str(os.getenv('BOT_TOKEN'))}/getMe")
-        # print(response.url)
-        # print(response.json())
-        if response.json()['ok']:
+        if check_systemd('bot'):
             bot_status.value = labels['elements']['is_active']
             app_info_elements['bot'].content.subtitle.controls[-1].visible = False
         else:

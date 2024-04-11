@@ -1132,15 +1132,24 @@ def main(page: ft.Page):
             close_dialog(edit_topic_dialog)
             open_snackbar(labels['snack_bars']['data_edited'])
 
+    def send_awake(message_text: str, chat_id: str):
+        url = f"https://api.telegram.org/bot{os.getenv('BOT_TOKEN')}/sendMessage"
+        data = {'chat_id': chat_id, 'text': message_text,
+                "parse_mode": "Markdown"}
+        d = requests.post(url=url, data=data)
+        print(d.json())
+
     def register(e):
         btn_register.disabled = True
         open_dialog(loading_dialog)
+
+        group_list = ""
         sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
         if make_db_request(sql_query, (group_name_field.value,), put_many=False):
-
             sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
             make_db_request(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain',), put_many=False)
 
+            group_list += f"👨‍💻*Капитан*\n{captain_name_field.value} ({captain_group_field.value})\n\n👥*Участники*\n"
             sql_query = "SELECT group_id FROM sgroups WHERE name = %s"
             group_id = make_db_request(sql_query, (group_name_field.value,), get_many=False)['group_id']
 
@@ -1160,16 +1169,21 @@ def main(page: ft.Page):
                 part = {}
                 part['name'] = participants[i].value
                 part['group'] = participants[i + 1].value
+                group_list += f"{part['name']} ({part['group']})\n"
                 make_db_request(sql_query, (group_id, 0, part['name'], part['group'], 'part',), put_many=False)
 
             sql_query = "UPDATE sgroups SET topic_id = (SELECT topic_id FROM topic WHERE status != %s ORDER BY RAND() LIMIT 1) WHERE group_id = %s"
             make_db_request(sql_query, ('busy', group_id,), put_many=False)
 
-            sql_query = "UPDATE topic SET status = %s WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = %s)"
-            make_db_request(sql_query, ('busy', group_id), put_many=False)
+            sql_query = "SELECT * FROM topic WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = %s)"
+            topic = make_db_request(sql_query, (group_id, ), get_many=False)
+
+            sql_query = "UPDATE topic SET status = %s WHERE topic_id = %s"
+            make_db_request(sql_query, ('busy', topic['topic_id']), put_many=False)
             close_dialog(loading_dialog)
             time.sleep(1)
             open_dialog(confirmation_registration_dialog)
+            send_awake(labels['bot_text']['registration_end'].format(captain_name_field.value.split(' ')[1], group_name_field.value, group_list, topic['description']), user_id)
         close_dialog(loading_dialog)
 
     def validate_group_registration_fields(e):
@@ -1679,8 +1693,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        page.route = '/panel'
-        # page.route = f'/registration/{random.randint(1000, 10000)}'
+        # page.route = '/panel'
+        page.route = f'/registration/{409801981}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

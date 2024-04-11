@@ -273,7 +273,7 @@ def main(page: ft.Page):
             bot_status.value = labels['elements']['is_active']
             app_info_elements['bot'].content.subtitle.controls[-1].visible = False
         else:
-            bot_status.value = labels['elements']['is_not_working'].format(response.status_code)
+            bot_status.value = labels['elements']['is_disabled']
             app_info_elements['bot'].content.subtitle.controls[-1].visible = True
 
         # disk

@@ -1136,8 +1136,10 @@ def main(page: ft.Page):
         url = f"https://api.telegram.org/bot{os.getenv('BOT_TOKEN')}/sendMessage"
         data = {'chat_id': chat_id, 'text': message_text,
                 "parse_mode": "Markdown"}
-        d = requests.post(url=url, data=data)
-        print(d.json())
+        try:
+            d = requests.post(url=url, data=data)
+        except Exception as e:
+            logging.error(f"SEND ENDREG MESSAGE: error: {e}, request: {d.json()}")
 
     def register(e):
         btn_register.disabled = True
@@ -1176,7 +1178,7 @@ def main(page: ft.Page):
             make_db_request(sql_query, ('busy', group_id,), put_many=False)
 
             sql_query = "SELECT * FROM topic WHERE topic_id = (SELECT topic_id FROM sgroups WHERE group_id = %s)"
-            topic = make_db_request(sql_query, (group_id, ), get_many=False)
+            topic = make_db_request(sql_query, (group_id,), get_many=False)
 
             sql_query = "UPDATE topic SET status = %s WHERE topic_id = %s"
             make_db_request(sql_query, ('busy', topic['topic_id']), put_many=False)

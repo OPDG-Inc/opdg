@@ -249,8 +249,8 @@ def main(page: ft.Page):
 
         # bot
         response = requests.get(url=f"https://api.telegram.org/bot{str(os.getenv('BOT_TOKEN'))}/getMe")
-        print(response.url)
-        print(response.json())
+        # print(response.url)
+        # print(response.json())
         if response.json()['ok']:
             bot_status.value = labels['elements']['is_active']
             app_info_elements['bot'].content.subtitle.controls[-1].visible = False

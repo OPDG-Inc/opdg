@@ -70,8 +70,8 @@ def main(page: ft.Page):
     }
     settings_subtitle_weight = ft.FontWeight.W_400
 
-    # page.window_width = 377
-    # page.window_height = 768
+    page.window_width = 377
+    page.window_height = 768
 
     cache_ttl = 180
     cache_topics = TTLCache(maxsize=1000, ttl=cache_ttl)
@@ -277,6 +277,64 @@ def main(page: ft.Page):
 
         page.update()
 
+    search_view = ft.ListView()
+    search_bar = ft.SearchBar(
+        bar_hint_text="Поиск команды",
+        view_hint_text="Введите название команды",
+        on_change=lambda _: find_group(),
+        controls=[search_view],
+    )
+
+    def open_group_info(e: ft.ControlEvent):
+        search_bar.close_view()
+        group = e.control.data
+        # col = ft.Column(
+        #     [
+        #         ft.ListTile(
+        #             title=ft.Text(group['name'], size=18, weight=ft.FontWeight.W_400),
+        #             subtitle=ft.Text(group['topic_id'], size=16)
+        #         ),
+        #         get_title_text("Состав"),
+        #         ft.Text("Пусто"),
+        #         get_title_text("Оценки"),
+        #         ft.Text("Пусто"),
+        #     ],
+        #     width=600,
+        #     height=500
+        # )
+        col = ft.Column(
+            [
+                ft.Text("Страница не наполнена", size=18)
+            ],
+            width=600,
+            height=500
+        )
+
+        group_info_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Row(
+                [
+                    ft.Container(get_title_text("Обзор группы"), expand=True),
+                    ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(group_info_dialog))
+                ]
+            ),
+            content=col
+        )
+        open_dialog(group_info_dialog)
+
+    def find_group():
+        print(search_bar.value)
+        search_view.controls.clear()
+        sql_query = "SELECT * FROM sgroups"
+        groups_list = request_groups(sql_query)
+        for group in groups_list:
+            # print(search_bar.value, group['name'])
+            if search_bar.value.lower() in group['name'].lower():
+                # print('ok')
+                search_view.controls.append(ft.ListTile(title=ft.Text(group['name'], size=18), on_click=open_group_info, data=group))
+        # search_bar.close_view()
+        page.update()
+
     def get_groups(force_update: bool = False):
         time.sleep(0.5)
         statuses = {
@@ -296,6 +354,7 @@ def main(page: ft.Page):
         )
         page.add(rr)
         page.update()
+        rr.controls.append(search_bar)
 
         sql_query = "SELECT * FROM sgroups"
         if force_update:
@@ -304,7 +363,9 @@ def main(page: ft.Page):
             groups_list = request_groups(sql_query)
         if groups_list is not None:
             if len(groups_list) > 0:
+                search_view.controls.clear()
                 for group in groups_list:
+                    search_view.controls.append(ft.ListTile(title=ft.Text(group['name'], size=18), on_click=open_group_info, data=group))
                     sql_query = "SELECT * FROM topic WHERE topic_id = %s"
                     topic_info = request_topic_info(sql_query, (group['topic_id'],))
 
@@ -381,9 +442,10 @@ def main(page: ft.Page):
         }
 
         # rr = ft.ResponsiveRow(columns=3)
-        rr = ft.ListView(
+        rr = ft.ResponsiveRow(
             animate_opacity=300,
-            opacity=0, width=800
+            opacity=0, width=1600,
+            columns=2
         )
         page.add(rr)
         page.update()
@@ -399,46 +461,77 @@ def main(page: ft.Page):
                 for topic in topics_list:
                     if topic['status'] == "busy":
                         busy_count += 1
-                    topic_card = ft.Card(
-                        ft.Container(
-                            content=ft.Column(
-                                controls=[
-                                    ft.ListTile(
-                                        title=get_title_text(f"#{topic['topic_id']} {topic['description']}"),
-                                        subtitle=ft.Row(
-                                            [
-                                                statuses[topic['status']]['icon'],
-                                                ft.Text(statuses[topic['status']]['title'], size=18)
-                                            ]
-                                        )
-                                    ),
-                                    ft.Row(
-                                        controls=[
-                                            ft.ElevatedButton(
-                                                text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
-                                                visible=statuses[topic['status']]['flag'],
-                                                data=topic,
-                                                on_click=goto_edit_topic,
-                                                bgcolor=ft.colors.PRIMARY_CONTAINER
-                                            ),
-                                            ft.ElevatedButton(
-                                                text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
-                                                visible=statuses[topic['status']]['flag'],
-                                                on_click=confirm_delete,
-                                                data=f"delete_topic_{topic['topic_id']}",
-                                                bgcolor=ft.colors.RED
-                                            )
-                                        ],
-                                        alignment=ft.MainAxisAlignment.END
+                    topic_card = ft.Row(
+                        [
+                            ft.Container(
+                                ft.ListTile(
+                                    title=ft.Text(f"#{topic['topic_id']} {topic['description']}", size=20, weight=ft.FontWeight.W_500),
+                                    subtitle=ft.Row(
+                                        [
+                                            statuses[topic['status']]['icon'],
+                                            ft.Text(statuses[topic['status']]['title'], size=18)
+                                        ]
                                     )
-                                ]
+
+                                ),
+                                expand=True
                             ),
-                            padding=15
-                        ),
-                        elevation=10,
-                        col={"lg": 1},
-                        data=topic['topic_id']
+                            ft.IconButton(
+                                ft.icons.EDIT_ROUNDED,
+                                visible=statuses[topic['status']]['flag'],
+                                on_click=goto_edit_topic,
+                                data=topic
+                            ),
+                            ft.IconButton(
+                                ft.icons.DELETE_ROUNDED,
+                                visible=statuses[topic['status']]['flag'],
+                                on_click=confirm_delete,
+                                data=f"delete_topic_{topic['topic_id']}"
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        col={"lg": 1}
                     )
+                    # topic_card = ft.Card(
+                    #     ft.Container(
+                    #         content=ft.Column(
+                    #             controls=[
+                    #                 ft.ListTile(
+                    #                     title=get_title_text(f"#{topic['topic_id']} {topic['description']}"),
+                    #                     subtitle=ft.Row(
+                    #                         [
+                    #                             statuses[topic['status']]['icon'],
+                    #                             ft.Text(statuses[topic['status']]['title'], size=18)
+                    #                         ]
+                    #                     )
+                    #                 ),
+                    #                 ft.Row(
+                    #                     controls=[
+                    #                         ft.ElevatedButton(
+                    #                             text=labels['buttons']['edit'], icon=ft.icons.EDIT_ROUNDED,
+                    #                             visible=statuses[topic['status']]['flag'],
+                    #                             data=topic,
+                    #                             on_click=goto_edit_topic,
+                    #                             bgcolor=ft.colors.PRIMARY_CONTAINER
+                    #                         ),
+                    #                         ft.ElevatedButton(
+                    #                             text=labels['buttons']['delete'], icon=ft.icons.DELETE_ROUNDED,
+                    #                             visible=statuses[topic['status']]['flag'],
+                    #                             on_click=confirm_delete,
+                    #                             data=f"delete_topic_{topic['topic_id']}",
+                    #                             bgcolor=ft.colors.RED
+                    #                         )
+                    #                     ],
+                    #                     alignment=ft.MainAxisAlignment.END
+                    #                 )
+                    #             ]
+                    #         ),
+                    #         padding=15
+                    #     ),
+                    #     elevation=10,
+                    #     col={"lg": 1},
+                    #     data=topic['topic_id']
+                    # )
                     rr.controls.append(topic_card)
                 rr.opacity = 1
             else:
@@ -1198,10 +1291,11 @@ def main(page: ft.Page):
     )
 
     topic_description = ft.TextField(
-        prefix_icon=ft.icons.TEXT_FIELDS_SHARP,
+        # prefix_icon=ft.icons.TEXT_FIELDS_SHARP,
         label=labels['fields']['topic_description'],
         hint_text=labels['fields_hint']['topic_description'],
         on_change=lambda _: validate_description_field(),
+        multiline=True
     )
 
     confirm_field = ft.TextField(
@@ -1286,7 +1380,7 @@ def main(page: ft.Page):
             controls=[
                 topic_description
             ],
-            height=60,
+            height=150,
             width=700
         ),
         actions_alignment=ft.MainAxisAlignment.END,

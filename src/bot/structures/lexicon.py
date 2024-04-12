@@ -52,3 +52,10 @@ upload_video = "Пришли мне своё видео"
 
 # Интерфейс жюри
 check_unapprecieated_videos = "Проверить наличие видео"
+
+# todo: Пользовательское соглашение
+user_agreement_text = "Пользовательское соглашение: бла-бла-бла"
+
+just_sent_web_app = 'Вам отправлено окно для регистрации команды.'
+
+text_after_disagreement = "бай-бай !"

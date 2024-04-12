@@ -7,7 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.strategy import FSMStrategy  # другая стратегия FSM
 
-from handlers import video_uploader
+from handlers import reg_team, video_uploader
 
 
 async def main():
@@ -20,7 +20,7 @@ async def main():
     bot = Bot(os.environ.get("BOT_TOKEN"))
     # dp = Dispatcher(storage=MemoryStorage(), fsm_strategy=FSMStrategy.CHAT)  # выбор другой стратегии FSM
     dp = Dispatcher(storage=MemoryStorage())
-    dp.include_routers(video_uploader.router)
+    dp.include_routers(reg_team.router, video_uploader.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

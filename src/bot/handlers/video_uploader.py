@@ -12,23 +12,7 @@ router = Router()
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        text="Выберите, что хотите заказать: "
-             "блюда (/food) или напитки (/drinks).",
-        reply_markup=ReplyKeyboardRemove()
-    )
-
-
-# Нетрудно догадаться, что следующие два хэндлера можно
-# спокойно объединить в один, но для полноты картины оставим так
-
-# default_state - это то же самое, что и StateFilter(None)
-@router.message(StateFilter(None), Command(commands=["cancel"]))
-@router.message(default_state, F.text.lower() == "отмена")
-async def cmd_cancel_no_state(message: Message, state: FSMContext):
-    # Стейт сбрасывать не нужно, удалим только данные
-    await state.set_data({})
-    await message.answer(
-        text="Нечего отменять",
+        text="Начало",
         reply_markup=ReplyKeyboardRemove()
     )
 

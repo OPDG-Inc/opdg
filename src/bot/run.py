@@ -5,9 +5,8 @@ from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.strategy import FSMStrategy  # другая стратегия FSM
 
-from handlers import reg_team, upload_video
+from handlers import *
 
 
 async def main():
@@ -17,10 +16,12 @@ async def main():
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
 
-    bot = Bot(os.environ.get("BOT_TOKEN"))
-    # dp = Dispatcher(storage=MemoryStorage(), fsm_strategy=FSMStrategy.CHAT)  # выбор другой стратегии FSM
+    bot = Bot(os.environ.get('BOT_TOKEN'))
     dp = Dispatcher(storage=MemoryStorage())
-    dp.include_routers(reg_team.router, upload_video.router)
+    dp.include_routers(reg_team.router,
+                       upload_video.router,
+                       check_status.router,
+                       user_agreement.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

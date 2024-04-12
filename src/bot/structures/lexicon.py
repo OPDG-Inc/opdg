@@ -50,6 +50,8 @@ load_video = "Загрузить видео"
 # change_data выше
 upload_video = "Пришли мне своё видео"
 
+already_registered = "Вы уже зарегистрированы!"
+
 # Интерфейс жюри
 check_unapprecieated_videos = "Проверить наличие видео"
 

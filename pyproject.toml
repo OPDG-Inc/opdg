@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 aiogram = "^3.4.1"
 pydantic-settings = "^2.2.1"
+mysql-connector-python = "^8.3.0"
 
 
 [build-system]

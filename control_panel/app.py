@@ -1163,6 +1163,15 @@ def main(page: ft.Page):
             logging.error(f"SEND ENDREG MESSAGE: error: {e}, request: {d.json()}")
 
     def register(e):
+        sql_query = f"SELECT name FROM sgroups"
+        groups_names = make_db_request(sql_query, get_many=True)
+        if groups_names is not None:
+            for name in groups_names:
+                if group_name_field.value.strip().lower() == name['name'].strip().lower():
+                    open_snackbar("Название команды уже занято")
+                    close_dialog(loading_dialog)
+                    return
+
         btn_register.disabled = True
         open_dialog(loading_dialog)
 
@@ -1172,7 +1181,7 @@ def main(page: ft.Page):
             sql_query = "INSERT INTO participants (telegram_id, name, study_group, status) VALUES (%s, %s, %s, %s)"
             make_db_request(sql_query, (user_id, captain_name_field.value, captain_group_field.value, 'captain',), put_many=False)
 
-            group_list += f"👨‍💻*Капитан*\n{captain_name_field.value} ({captain_group_field.value})\n\n👥*Участники*\n"
+            group_list += f"👨‍💻 *Капитан*\n{captain_name_field.value} ({captain_group_field.value})\n\n👥 *Участники*\n"
             sql_query = "SELECT group_id FROM sgroups WHERE name = %s"
             group_id = make_db_request(sql_query, (group_name_field.value,), get_many=False)['group_id']
 
@@ -1210,14 +1219,25 @@ def main(page: ft.Page):
         close_dialog(loading_dialog)
 
     def validate_group_registration_fields(e):
+
         if all([
             group_name_field.value,
             captain_name_field.value,
-            captain_group_field.value
+            captain_group_field.value,
+            len(captain_name_field.value.split()) > 1,
+            '/' in captain_group_field.value,
+            # len(captain_group_field.value.split('/')[0]) == 7,
+            # len(captain_group_field.value.split('/')[1]) >= 5
         ]):
             fl = False
             for el in parts.controls:
                 if type(el) == flet_core.textfield.TextField:
+                    if el.label == captain_name_field.label and len(el.value.split()) < 2:
+                        fl = True
+                        break
+                    if el.label == captain_group_field.label and not( '/' in el.value and len(el.value.split('/')[0]) == 7 and len(el.value.split('/')[1]) >= 5):
+                        fl = True
+                        break
                     if el.value == '':
                         fl = True
                         break
@@ -1716,8 +1736,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        page.route = '/panel'
-        # page.route = f'/registration/{409801981}'
+        # page.route = '/panel'
+        page.route = f'/registration/{409801981}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

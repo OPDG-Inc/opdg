@@ -9,6 +9,7 @@ router = Router()
 
 
 @router.message(Command(commands=["user_agreement"]))
+@router.message(F.text == "Пользовательское соглашение")
 async def cmd_start(message: Message):
     await message.answer(
         text=user_agreement_text,

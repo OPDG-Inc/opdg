@@ -6,6 +6,7 @@ router = Router()
 
 
 @router.message(Command(commands=["upload_video"]))
+@router.message(F.text == "Загрузка видео")
 async def cmd_start(message: Message):
     await message.answer(
         text="Начало",

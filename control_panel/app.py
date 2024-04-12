@@ -20,7 +20,6 @@ from elements.errors_targets import targets
 from elements.screens import screens
 from elements.tabs import tabs_config
 from elements.text import labels
-from elements.ruz_parsing import update_group_list
 from functions import load_config_file, update_config_file
 
 # from .. import yadiskapi
@@ -143,7 +142,7 @@ def main(page: ft.Page):
 
     def open_snackbar(text: str, bg_color=None, text_color=None):
 
-        content = ft.Text(text, size=16, weight=ft.FontWeight.W_400)
+        content = ft.Text(text, size=18, weight=ft.FontWeight.W_400)
         sb = ft.SnackBar(
             content=content,
             duration=1000
@@ -237,10 +236,10 @@ def main(page: ft.Page):
         page.update()
 
     def get_app_info():
-        # time.sleep(1)
+        time.sleep(1)
 
         # db
-        if check_systemd('mysql') :
+        if check_systemd('mysql'):
             sql_query = "SELECT COUNT(*) FROM topic"
             if make_db_request(sql_query, get_many=False):
                 db_status.value = labels['elements']['is_active']
@@ -286,7 +285,7 @@ def main(page: ft.Page):
             response = requests.get(url="https://cloud-api.yandex.net/v1/disk", headers=headers)
             if response.status_code == 200:
                 disk_status.value = labels['elements']['is_active']
-            else:   
+            else:
                 disk_status.value = labels['elements']['is_not_working'].format(response.status_code)
         except requests.exceptions.ConnectionError:
             disk_status.value = labels['elements']['is_disabled']
@@ -449,7 +448,6 @@ def main(page: ft.Page):
         page.update()
 
     def get_topics(force_update: bool = False):
-        page.controls.clear()
         time.sleep(0.5)
         statuses = {
             "free": {
@@ -563,7 +561,6 @@ def main(page: ft.Page):
         page.update()
 
     def get_jury(force_update: bool = False):
-        page.controls.clear()
         time.sleep(0.5)
         statuses = {
             "waiting": {
@@ -585,7 +582,6 @@ def main(page: ft.Page):
         else:
             jury_list = request_jury(sql_query)
         if jury_list is not None:
-            # rr.controls.clear()
             if len(jury_list) > 0:
                 for jury in jury_list:
                     jury_card = ft.Card(
@@ -1137,10 +1133,6 @@ def main(page: ft.Page):
                         page.update()
                         break
                 open_snackbar(labels['snack_bars']['element_deleted'])
-                if data[0] == 'topic':
-                    get_topics(force_update=True)
-                elif data[0] == 'jury':
-                    get_jury(force_update=True)
         else:
             table = data[0].split('many')[-1]
 
@@ -1171,29 +1163,9 @@ def main(page: ft.Page):
             logging.error(f"SEND ENDREG MESSAGE: error: {e}, request: {d.json()}")
 
     def register(e):
-
-        sql_query = f"SELECT name FROM sgroups"
-        groups_names = make_db_request(sql_query, get_many=True)
-        if groups_names is not None:
-            for name in groups_names:
-                if group_name_field.value.strip().lower() == name['name'].strip().lower():
-                    open_snackbar("Название команды уже занято")
-                    close_dialog(loading_dialog)
-                    return
-
-        groups_list = load_config_file('study_groups.json')
-        if captain_group_field.value.strip() not in groups_list:
-            open_snackbar(f'Группы {captain_group_field.value} не существует')
-            return
-
-        participants = [el for el in parts.controls if type(el) == flet_core.textfield.TextField]
-        for i in range(0, len(participants), 2):
-            if participants[i + 1].value.strip() not in groups_list:
-                open_snackbar(f'Группы {participants[i + 1].value.strip()} не существует')
-                return
-
         btn_register.disabled = True
         open_dialog(loading_dialog)
+
         group_list = ""
         sql_query = "INSERT INTO sgroups (name) VALUES (%s)"
         if make_db_request(sql_query, (group_name_field.value,), put_many=False):
@@ -1241,18 +1213,11 @@ def main(page: ft.Page):
         if all([
             group_name_field.value,
             captain_name_field.value,
-            captain_group_field.value,
-            len(captain_name_field.value.split()) > 1
+            captain_group_field.value
         ]):
             fl = False
             for el in parts.controls:
                 if type(el) == flet_core.textfield.TextField:
-                    if el.label == captain_name_field.label and len(el.value.split()) < 2:
-                        fl = True
-                        break
-                    # if el.label == captain_group_field.label and not( '/' in el.value and len(el.value.split('/')[0]) == 7 and len(el.value.split('/')[1]) >= 5):
-                    #     fl = True
-                    #     break
                     if el.value == '':
                         fl = True
                         break
@@ -1752,7 +1717,7 @@ def main(page: ft.Page):
 
     if platform.system() == "Windows":
         page.route = '/panel'
-        # page.route = f'/registration/{40980142342981}'
+        # page.route = f'/registration/{409801981}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

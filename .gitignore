@@ -83,8 +83,6 @@ __pycache__/
 
 #
 control_panel/config.json
-control_panel/parsed.json
-control_panel/study_groups.json
 
 # Distribution / packaging
 .Python

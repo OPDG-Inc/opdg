@@ -18,7 +18,7 @@ async def main():
 
     bot = Bot(os.environ.get('BOT_TOKEN'))
     dp = Dispatcher(storage=MemoryStorage())
-    dp.include_routers(reg_team.router,
+    dp.include_routers(start.router,
                        upload_video.router,
                        check_status.router,
                        user_agreement.router)

@@ -10,7 +10,7 @@ router = Router()
 
 @router.message(Command(commands=["user_agreement"]))
 @router.message(F.text == "Пользовательское соглашение")
-async def cmd_start(message: Message):
+async def cmd_user_agreement(message: Message):
     await message.answer(
         text=user_agreement_text,
         reply_markup=MAIN_MENU_BOARD

@@ -81,7 +81,8 @@ labels = {
         'initials': "ФИО",
         'new_topic': "Тема",
         'group': "Номер группы",
-        'new_group_name': "Название команды"
+        'new_group_name': "Название команды",
+        'tid': "Telegram ID"
 
     },
     'fields_hint': {
@@ -91,7 +92,8 @@ labels = {
         'initials': "Иванов Иван Иванович",
         'new_topic': "Введите описание темы",
         'group': "5130904/20002",
-        'new_group_name': "Введи название команды"
+        'new_group_name': "Введи название команды",
+        'tid': "4090180157"
     },
     'snack_bars': {
         'welcome': "С возвращением!",

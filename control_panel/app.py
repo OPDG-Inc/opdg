@@ -886,8 +886,8 @@ def main(page: ft.Page):
         on_change=validate_param
     )
 
-    def validate_jury_field(e: ft.ControlEvent):
-        if len(jury_name_field.value.strip().split(" ")) in [2, 3]:
+    def validate_jury_info(e: ft.ControlEvent):
+        if len(jury_name_field.value.strip().split(" ")) in [2, 3] and jury_tid_field.value.isnumeric():
             new_jury_card.content.content.controls[-1].controls[-1].disabled = False
         else:
             new_jury_card.content.content.controls[-1].controls[-1].disabled = True
@@ -956,8 +956,8 @@ def main(page: ft.Page):
 
         pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
 
-        sql_query = "INSERT INTO jury (name, pass_phrase) VALUES (%s, %s)"
-        if make_db_request(sql_query, (jury_name_field.value, pass_phrase,), put_many=False):
+        sql_query = "INSERT INTO jury (name, pass_phrase, telegram_id) VALUES (%s, %s, %s)"
+        if make_db_request(sql_query, (jury_name_field.value, pass_phrase, jury_tid_field.value), put_many=False):
             e.control.text = labels['buttons']['add']
             jury_name_field.value = ''
             change_screen("main")
@@ -1513,14 +1513,30 @@ def main(page: ft.Page):
     jury_name_field = ft.TextField(
         label=labels['fields']['initials'],
         hint_text=labels['fields_hint']['initials'],
-        on_change=validate_jury_field
+        on_change=validate_jury_info
+    )
+
+    jury_tid_field = ft.TextField(
+        label=labels['fields']['tid'],
+        hint_text=labels['fields_hint']['tid'],
+        on_change=validate_jury_info
     )
 
     new_jury_card = ft.Card(
         ft.Container(
             content=ft.Column(
                 [
-                    ft.Container(jury_name_field, expand=True),
+                    ft.Container(
+                        ft.Column(
+                            [
+                                jury_name_field,
+                                jury_tid_field,
+                            ]
+                        ),
+                        expand=True
+                    ),
+                    # ft.Container(, expand=True),
+                    # ft.Container(, expand=True),
                     ft.Row(
                         [
                             ft.ElevatedButton(
@@ -1535,7 +1551,7 @@ def main(page: ft.Page):
                     )
                 ],
                 width=800,
-                height=120
+                height=200
             ),
             padding=15
         ),
@@ -1736,8 +1752,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        # page.route = '/panel'
-        page.route = f'/registration/{409801981}'
+        page.route = '/panel'
+        # page.route = f'/registration/{409801981}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

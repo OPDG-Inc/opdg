@@ -356,7 +356,7 @@ def main(page: ft.Page):
         # search_bar.close_view()
         page.update()
 
-    def get_groups(force_update: bool = False):
+    def get_groups(force_update: bool = True):
         time.sleep(0.5)
         statuses = {
             'waiting': {
@@ -949,19 +949,25 @@ def main(page: ft.Page):
         # open_snackbar(labels['snack_bars']['data_updated'])
 
     def add_jury(e: ft.ControlEvent):
-        e.control.disabled = True
-        e.control.text = labels['buttons']['adding']
-        page.update()
-        time.sleep(0.5)
+        sql_query = "SELECT COUNT(*) FROM jury WHERE telegram_id = %s OR name = %s"
+        check_counter = make_db_request(sql_query, (jury_tid_field.value, jury_name_field.value), get_many=False)['COUNT(*)']
+        if check_counter is not None:
+            if check_counter != 0:
+                open_snackbar(labels['snack_bars']['jury_already_exists'])
+                return
+            e.control.disabled = True
+            e.control.text = labels['buttons']['adding']
+            page.update()
+            time.sleep(0.5)
 
-        pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
+            pass_phrase = hashlib.sha1(str(uuid.uuid4()).encode('utf-8')).hexdigest()[:15]
 
-        sql_query = "INSERT INTO jury (name, pass_phrase, telegram_id) VALUES (%s, %s, %s)"
-        if make_db_request(sql_query, (jury_name_field.value, pass_phrase, jury_tid_field.value), put_many=False):
-            e.control.text = labels['buttons']['add']
-            jury_name_field.value = ''
-            change_screen("main")
-            change_navbar_tab(2)
+            sql_query = "INSERT INTO jury (name, pass_phrase, telegram_id) VALUES (%s, %s, %s)"
+            if make_db_request(sql_query, (jury_name_field.value, pass_phrase, jury_tid_field.value), put_many=False):
+                e.control.text = labels['buttons']['add']
+                jury_name_field.value = ''
+                change_screen("main")
+                change_navbar_tab(2)
 
     def get_update_params(e: ft.ControlEvent):
         param = e.control.data
@@ -1016,16 +1022,17 @@ def main(page: ft.Page):
 
         elif target == "add_jury":
             page.navigation_bar = navbar
+            jury_tid_field.value = ""
+            jury_name_field.value = ""
             page.add(new_jury_card)
 
         elif target == "view_group":
             page.navigation_bar = navbar
-            # page.navigation_bar.selected_index = -1
             page.add(get_title_text('Тест'))
 
         elif target == "import_themes":
             page.navigation_bar = navbar
-
+            new_topic_field.value = ""
             sql_query = "SELECT COUNT(*) FROM topic"
             if make_db_request(sql_query, get_many=False):
                 access_code = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))

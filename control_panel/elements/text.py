@@ -109,7 +109,8 @@ labels = {
         'loading': "Загружаем",
         'accesscode_copied': "Код подключения скопирован",
         'topic_added': "Тема добавлена",
-        'rebooting': "Перезагружаем"
+        'rebooting': "Перезагружаем",
+        'jury_already_exists': "Жюри с такими данными уже существует"
     },
     'statuses': {
         'topic_free': "Свободна",

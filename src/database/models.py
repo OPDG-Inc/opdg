@@ -14,6 +14,7 @@ async def create_db_connection():
             password=os.environ.get('DB_PASSWORD'),
             database=os.environ.get('DB_NAME')
         )
+        connection.autocommit = True
         cur = connection.cursor(dictionary=True)
         return connection, cur
 

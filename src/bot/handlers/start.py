@@ -8,7 +8,7 @@ from src.bot.structures.lexicon import (user_agreement_text, text_after_disagree
 from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, MAIN_MENU_BOARD)
 from src.database.requests import (get_jury_by_link_code,
                                    get_jury_status,
-                                   change_jury_status_to_registered,
+                                   set_jury_status_to_registered,
                                    get_jury_name)
 
 
@@ -23,8 +23,9 @@ async def cmd_start_link(message: Message, command: CommandObject):
         jury_id = await get_jury_by_link_code(code)
     jury_status = await get_jury_status(jury_id)
     if jury_status == 'waiting':
-        await change_jury_status_to_registered(jury_id)
-    jury_name = get_jury_name(jury_id)
+        await set_jury_status_to_registered(jury_id)
+    jury_name = await get_jury_name(jury_id)
+    jury_name = ' '.join(jury_name.split()[1:])
     await message.answer(
         text=f"{jury_name}, вы зарегистрировались как жюри.",
         reply_markup=MAIN_MENU_BOARD

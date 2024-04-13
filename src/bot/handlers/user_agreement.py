@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from src.bot.structures.lexicon import user_agreement_text
-from src.bot.structures.keyboards import MAIN_MENU_BOARD
+from src.bot.structures.keyboards import USER_MAIN_MENU_BOARD
 
 router = Router()
 
@@ -13,5 +13,5 @@ router = Router()
 async def cmd_user_agreement(message: Message):
     await message.answer(
         text=user_agreement_text,
-        reply_markup=MAIN_MENU_BOARD
+        reply_markup=USER_MAIN_MENU_BOARD
     )

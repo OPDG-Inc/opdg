@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from src.bot.structures.keyboards import TO_MENU, MAIN_MENU_BOARD
+from src.bot.structures.keyboards import TO_MENU, USER_MAIN_MENU_BOARD
 
 router = Router()
 
@@ -21,5 +21,5 @@ async def cmd_upload_video(message: Message):
 async def cmd_to_main_menu(message: Message):
     await message.answer(
         text="Главное меню.",
-        reply_markup=MAIN_MENU_BOARD
+        reply_markup=USER_MAIN_MENU_BOARD
     )

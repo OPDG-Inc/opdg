@@ -4,8 +4,8 @@ from aiogram.filters import Command, CommandStart, CommandObject
 
 from src.bot.filters import IsNotExists
 from src.bot.structures.lexicon import (user_agreement_text, text_after_disagreement, just_sent_web_app,
-                                        already_registered)
-from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, MAIN_MENU_BOARD)
+                                        user_already_registered, jury_already_registered)
+from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD)
 from src.database.requests import (get_jury_by_link_code,
                                    get_jury_status,
                                    set_jury_status_to_registered,
@@ -19,17 +19,39 @@ router = Router()
 async def cmd_start_link(message: Message, command: CommandObject):
     args = command.args
     link_type, code = args.split('_')
+    jury_id = None
+
     if link_type == 'jury' and code is not None:
         jury_id = await get_jury_by_link_code(code)
-    jury_status = await get_jury_status(jury_id)
-    if jury_status == 'waiting':
-        await set_jury_status_to_registered(jury_id)
-    jury_name = await get_jury_name(jury_id)
-    jury_name = ' '.join(jury_name.split()[1:])
-    await message.answer(
-        text=f"{jury_name}, вы зарегистрировались как жюри.",
-        reply_markup=MAIN_MENU_BOARD
-    )
+
+    if jury_id is not None:
+        jury_status = await get_jury_status(jury_id)
+        if jury_status == 'waiting':
+            await set_jury_status_to_registered(jury_id)
+        elif jury_status == 'registered':
+            await message.answer(
+                text=jury_already_registered,
+                reply_markup=USER_MAIN_MENU_BOARD
+            )
+            return
+
+        jury_name = await get_jury_name(jury_id)
+        if jury_name:
+            jury_name = ' '.join(jury_name.split()[1:])
+            await message.answer(
+                text=f"{jury_name}, вы зарегистрировались как жюри.",
+                reply_markup=USER_MAIN_MENU_BOARD
+            )
+        else:
+            await message.answer(
+                text="К сожалению, не удалось найти вас в списке жюри.",
+                reply_markup=USER_MAIN_MENU_BOARD
+            )
+    else:
+        await message.answer(
+            text="Код ссылки недействителен или произошла ошибка при поиске жюри.",
+            reply_markup=USER_MAIN_MENU_BOARD
+        )
 
 
 @router.message(IsNotExists(), Command(commands=["start"]))
@@ -43,8 +65,8 @@ async def cmd_start(message: Message):
 @router.message(~IsNotExists(), Command(commands=["start"]))
 async def cmd_start_exists(message: Message):
     await message.answer(
-        text=already_registered,
-        reply_markup=MAIN_MENU_BOARD
+        text=user_already_registered,
+        reply_markup=USER_MAIN_MENU_BOARD
     )
 
 

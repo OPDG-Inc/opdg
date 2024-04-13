@@ -50,8 +50,9 @@ load_video = "Загрузить видео"
 # change_data выше
 upload_video = "Пришли мне своё видео"
 
-user_already_registered = "Вы уже зарегистрированы."
+user_already_registered = "Вы уже зарегистрированы как участник."
 jury_already_registered = "Вы уже зарегистрированы как жюри."
+user_reg_but_jury = "Вы зарегистрированы как участник, но у вас есть права, как у жюри. Вы разработчик!"
 
 # Интерфейс жюри
 check_unapprecieated_videos = "Проверить наличие видео"

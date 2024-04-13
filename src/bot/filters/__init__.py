@@ -1,1 +1,1 @@
-from .filters import (IsNotExists, )
+from .filters import (IsJury, IsUser,)

@@ -2,9 +2,9 @@ from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import Command, CommandStart, CommandObject
 
-from src.bot.filters import IsNotExists
+from src.bot.filters import IsUser, IsJury
 from src.bot.structures.lexicon import (user_agreement_text, text_after_disagreement, just_sent_web_app,
-                                        user_already_registered, jury_already_registered)
+                                        user_already_registered, jury_already_registered, user_reg_but_jury)
 from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD, JURY_MAIN_MENU_BOARD)
 from src.database.requests import (get_jury_by_link_code,
                                    get_jury_status,
@@ -16,8 +16,8 @@ from src.database.requests import (get_jury_by_link_code,
 router = Router()
 
 
-@router.message(CommandStart(deep_link=True))
-async def cmd_start_link(message: Message, command: CommandObject):
+@router.message(IsJury(), CommandStart(deep_link=True))
+async def cmd_start_jury_link(message: Message, command: CommandObject):
     args = command.args
     link_type, code = args.split('_')
     jury_id = None
@@ -66,7 +66,7 @@ async def cmd_start_link(message: Message, command: CommandObject):
     )
 
 
-@router.message(IsNotExists(), Command(commands=["start"]))
+@router.message(~IsUser(), Command(commands=["start"]))
 async def cmd_start(message: Message):
     await message.answer(
         text=user_agreement_text,
@@ -74,8 +74,16 @@ async def cmd_start(message: Message):
     )
 
 
-@router.message(~IsNotExists(), Command(commands=["start"]))
-async def cmd_start_exists(message: Message):
+@router.message(IsJury(), IsUser(), Command(commands=["start"]))
+async def cmd_start_jury_already_exists(message: Message):
+    await message.answer(
+        text=user_reg_but_jury,
+        reply_markup=JURY_MAIN_MENU_BOARD
+    )
+
+
+@router.message(IsUser(), Command(commands=["start"]))
+async def cmd_start_user_already_exists(message: Message):
     await message.answer(
         text=user_already_registered,
         reply_markup=USER_MAIN_MENU_BOARD

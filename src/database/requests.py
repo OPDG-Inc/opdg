@@ -2,30 +2,6 @@ from mysql.connector import Error
 from .models import create_db_connection
 
 
-async def is_user_not_exists(telegram_id):
-    conn = None
-    is_not_exists = False
-    try:
-        conn, cur = await create_db_connection()
-        query = "SELECT COUNT(*) AS user_count FROM participants WHERE telegram_id = %s"
-        cur.execute(query, (telegram_id,))
-
-        result = cur.fetchone()
-        user_count = result['user_count']
-
-        if user_count == 0:
-            is_not_exists = True
-
-    except Error as e:
-        print(f"Ошибка: {e}")
-
-    finally:
-        if conn is not None:
-            conn.close()
-
-        return is_not_exists
-
-
 async def get_jury_by_link_code(code):
     conn = None
     jury_id = None
@@ -111,7 +87,7 @@ async def is_jury_correlate_with_code(jury_id, telegram_id):
     is_correlate = False
     try:
         conn, cur = await create_db_connection()
-        query = "SELECT COUNT(*) AS user_count FROM jury WHERE jury_id = %s AND telegram_id = %s"
+        query = "SELECT COUNT(*) AS jury_count FROM jury WHERE jury_id = %s AND telegram_id = %s"
         cur.execute(query, (jury_id, telegram_id))
 
         result = cur.fetchone()
@@ -128,3 +104,51 @@ async def is_jury_correlate_with_code(jury_id, telegram_id):
             conn.close()
 
         return is_correlate
+
+
+async def is_jury(telegram_id):
+    conn = None
+    is_jury_member = False
+    try:
+        conn, cur = await create_db_connection()
+        query = "SELECT COUNT(*) AS jury_count FROM jury WHERE telegram_id = %s"
+        cur.execute(query, (telegram_id,))
+
+        result = cur.fetchone()
+        jury_count = result['jury_count']
+
+        if jury_count > 0:
+            is_jury_member = True
+
+    except Error as e:
+        print(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+
+        return is_jury_member
+
+
+async def is_user(telegram_id):
+    conn = None
+    is_participants_member = False
+    try:
+        conn, cur = await create_db_connection()
+        query = "SELECT COUNT(*) AS user_count FROM participants WHERE telegram_id = %s"
+        cur.execute(query, (telegram_id,))
+
+        result = cur.fetchone()
+        user_count = result['user_count']
+
+        if user_count > 0:
+            is_participants_member = True
+
+    except Error as e:
+        print(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+
+        return is_participants_member

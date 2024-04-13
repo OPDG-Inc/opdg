@@ -9,7 +9,7 @@ labels = {
         'already_registered': "Твоя команда уже зарегистрирована",
     },
     'elements': {
-        'bot_link': "https://t.me/bot_name?start=jury_{0}",
+        'bot_link': "https://t.me/vshpm_event_bot?start=jury_{0}",
         'loading': "Загружаем",
         'no_marks_subtitle': "не выставлены",
         'is_active': "🟢 работает",

@@ -104,3 +104,27 @@ async def get_jury_name(jury_id):
             conn.close()
 
         return jury_name
+
+
+async def is_jury_correlate_with_code(jury_id, telegram_id):
+    conn = None
+    is_correlate = False
+    try:
+        conn, cur = await create_db_connection()
+        query = "SELECT COUNT(*) AS user_count FROM jury WHERE jury_id = %s AND telegram_id = %s"
+        cur.execute(query, (jury_id, telegram_id))
+
+        result = cur.fetchone()
+        user_count = result['user_count']
+
+        if user_count > 0:
+            is_correlate = True
+
+    except Error as e:
+        print(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+
+        return is_correlate

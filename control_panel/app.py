@@ -1768,10 +1768,12 @@ def main(page: ft.Page):
         routes = str(page.route).split("/")
         page_route = routes[1]
         if page_route == 'panel':
+            page.title = "Панель управления"
             page.scroll = None
             change_screen("login")
 
         elif page_route == 'registration' and len(routes) == 3:
+            page.title = "Регистрация"
             user_id = routes[2]
             page.scroll = ft.ScrollMode.ADAPTIVE
             sql_query = "SELECT * FROM participants WHERE telegram_id = %s"
@@ -1843,7 +1845,8 @@ if __name__ == "__main__":
     if platform.system() == 'Windows':
         ft.app(
             assets_dir='assets',
-            target=main
+            target=main,
+            view=ft.AppView.WEB_BROWSER
         )
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)

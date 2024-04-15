@@ -1767,7 +1767,7 @@ def main(page: ft.Page):
     else:
         routes = str(page.route).split("/")
         page_route = routes[1]
-        if page_route == 'panel':
+        if page_route == '':
             page.title = "Панель управления"
             page.scroll = None
             change_screen("login")

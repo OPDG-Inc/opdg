@@ -1,8 +1,12 @@
+import time
+
 from aiogram import Bot, F, Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
 from src.bot.filters import IsUser
+from src.utils import keep_letters_and_digits
+from src.database.requests import get_team_name
 from src.bot.structures.keyboards import TO_MENU, USER_MAIN_MENU_BOARD
 
 router = Router()
@@ -20,13 +24,18 @@ async def cmd_upload_video(message: Message):
 
 
 @router.message(F.video)
-async def cmd_upload_video(bot: Bot, message: Message):
+async def cmd_upload_video(message: Message, bot: Bot):
     file_id = message.video.file_id
     file = await bot.get_file(file_id)
     file_path = file.file_path
-    await bot.download_file(file_path, "video.mp4")
+
+    timestamp = int(time.time())
+    team_name = keep_letters_and_digits(await get_team_name(message.from_user.id))
+    filename = f"video_{team_name}_{timestamp}.mp4"
+
+    await bot.download_file(file_path, filename)
     await message.answer(
-        text="Вау, это действительно видео!",
+        text="Ваше видео сохранено.",
         reply_markup=USER_MAIN_MENU_BOARD
     )
 

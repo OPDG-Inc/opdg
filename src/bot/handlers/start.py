@@ -3,6 +3,7 @@ from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.filters import Command, CommandStart, CommandObject
 
 from src.bot.filters import IsUser, IsJury
+from src.utils import get_name_and_middle
 from src.bot.structures.lexicon import (user_agreement_text, text_after_disagreement, just_sent_web_app,
                                         user_already_registered, jury_already_registered, user_reg_but_jury)
 from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD, JURY_MAIN_MENU_BOARD)
@@ -59,7 +60,7 @@ async def cmd_start_jury_link(message: Message, command: CommandObject):
     if jury_name == '' or jury_name is None:
         jury_name = 'Неизвестный'
     else:
-        jury_name = ' '.join(jury_name.split()[1:])
+        jury_name = get_name_and_middle(jury_name)
     await message.answer(
         text=f"{jury_name}, вы зарегистрировались как жюри.",
         reply_markup=JURY_MAIN_MENU_BOARD

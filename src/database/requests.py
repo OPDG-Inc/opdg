@@ -152,3 +152,35 @@ async def is_user(telegram_id):
             conn.close()
 
         return is_participants_member
+
+
+async def get_team_name(telegram_id):
+    conn = None
+    team_name = None
+
+    try:
+        conn, cur = await create_db_connection()
+
+        # Находим participants_id по telegram_id в таблице participants
+        query_participant_id = "SELECT participant_id FROM participants WHERE telegram_id = %s"
+        cur.execute(query_participant_id, (telegram_id,))
+        result_participant = cur.fetchone()
+
+        if result_participant:
+            participant_id = result_participant['participant_id']
+
+            # Ищем название команды (name) в таблице sgroups по capitan_id (равному найденному participants_id)
+            query_team_name = "SELECT name FROM sgroups WHERE captain_id = %s"
+            cur.execute(query_team_name, (participant_id,))
+            result_team_name = cur.fetchone()
+
+            if result_team_name:
+                team_name = result_team_name['name']
+
+    except Error as e:
+        print(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+        return team_name

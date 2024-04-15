@@ -3,10 +3,11 @@ import asyncio
 import logging
 from dotenv import load_dotenv
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from handlers import *
+from middlewares import SkipSideUser
 
 
 async def main():
@@ -18,10 +19,15 @@ async def main():
 
     bot = Bot(os.environ.get('BOT_TOKEN'))
     dp = Dispatcher(storage=MemoryStorage())
-    dp.include_routers(start.router,
-                       upload_video.router,
-                       check_status.router,
-                       user_agreement.router)
+
+    router_service = Router()  # все роутеры, кроме start
+    router_service.include_routers(upload_video.router,
+                                   check_status.router,
+                                   rate_video.router,
+                                   user_agreement.router)
+    router_service.message.outer_middleware(SkipSideUser())
+
+    dp.include_routers(start.router, router_service)
 
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

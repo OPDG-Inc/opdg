@@ -1,5 +1,3 @@
-# todo: функция: из фио оставить только имя и отчество для официальных обращений в переписке
-#  (см. src/bot/handlers/start.py)
 def get_name_and_middle(fio):
     return ' '.join(fio.split()[1:])
 

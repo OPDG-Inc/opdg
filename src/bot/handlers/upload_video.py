@@ -25,6 +25,7 @@ async def cmd_upload_video(message: Message):
 
 @router.message(F.video)
 async def cmd_upload_video(message: Message, bot: Bot):
+    await message.answer(text="Подождите, сохраняю ваше видео...")
     file_id = message.video.file_id
     file = await bot.get_file(file_id)
     file_path = file.file_path

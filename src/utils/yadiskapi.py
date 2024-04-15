@@ -46,7 +46,7 @@ class YandexAPI:
 
     def upload_file(self, filepath: str, file: str) -> {}:
         """
-        :param filepath: путь, по которму будет загружен файл
+        :param filepath: путь, по которому будет загружен файл
         :param file: путь к исходному файлу
         :return:
         """

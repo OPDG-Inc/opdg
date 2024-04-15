@@ -17,5 +17,4 @@ class SkipSideUser(BaseMiddleware):
         is_jury_res = await is_jury(user.id)
         if is_user_res and is_jury_res:
             return await handler(event, data)
-        print(f"какой-то рандомный чел")
         return

@@ -161,7 +161,6 @@ async def get_team_name(telegram_id):
     try:
         conn, cur = await create_db_connection()
 
-        # Находим participants_id по telegram_id в таблице participants
         query_participant_id = "SELECT participant_id FROM participants WHERE telegram_id = %s"
         cur.execute(query_participant_id, (telegram_id,))
         result_participant = cur.fetchone()
@@ -169,7 +168,6 @@ async def get_team_name(telegram_id):
         if result_participant:
             participant_id = result_participant['participant_id']
 
-            # Ищем название команды (name) в таблице sgroups по capitan_id (равному найденному participants_id)
             query_team_name = "SELECT name FROM sgroups WHERE captain_id = %s"
             cur.execute(query_team_name, (participant_id,))
             result_team_name = cur.fetchone()

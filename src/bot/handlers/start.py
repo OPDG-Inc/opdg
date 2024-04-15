@@ -5,13 +5,13 @@ from aiogram.filters import Command, CommandStart, CommandObject
 from src.bot.filters import IsUser, IsJury
 from src.utils import get_name_and_middle
 from src.bot.structures.lexicon import (user_agreement_text, text_after_disagreement, just_sent_web_app,
-                                        user_already_registered, jury_already_registered, user_reg_but_jury)
-from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD, JURY_MAIN_MENU_BOARD)
+                                        user_already_registered, jury_already_registered, user_reg_but_jury,)
+from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD, JURY_MAIN_MENU_BOARD,)
 from src.database.requests import (get_jury_by_link_code,
                                    get_jury_status,
                                    set_jury_status_to_registered,
                                    get_jury_name,
-                                   is_jury_correlate_with_code)
+                                   is_jury_correlate_with_code,)
 
 
 router = Router()

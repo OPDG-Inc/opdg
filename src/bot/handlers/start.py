@@ -72,7 +72,7 @@ async def cmd_start(message: Message):
     )
 
 
-@router.message(IsUser(), CommandStart())
+@router.message(IsJury(), CommandStart())
 async def cmd_start_jury_already_exists(message: Message):
     await message.answer(
         text=user_reg_but_jury,

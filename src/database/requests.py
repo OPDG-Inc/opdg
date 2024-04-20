@@ -1,3 +1,5 @@
+import logging
+
 from mysql.connector import Error
 from .models import create_db_connection
 
@@ -15,7 +17,7 @@ async def get_jury_by_link_code(code):
             jury_id = result['result']
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -37,7 +39,7 @@ async def get_jury_status(jury_id):
             status = result['result']
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -53,7 +55,7 @@ async def set_jury_status_to_registered(jury_id):
         cur.execute(query, ('registered', jury_id,))
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -73,7 +75,7 @@ async def get_jury_name(jury_id):
             jury_name = result['result']
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -97,7 +99,7 @@ async def is_jury_correlate_with_code(jury_id, telegram_id):
             is_correlate = True
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -121,7 +123,7 @@ async def is_jury(telegram_id):
             is_jury_member = True
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -145,7 +147,7 @@ async def is_user(telegram_id):
             is_participants_member = True
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:
@@ -176,7 +178,7 @@ async def get_team_name(telegram_id):
                 team_name = result_team_name['name']
 
     except Error as e:
-        print(f"Ошибка: {e}")
+        logging.error(f"Ошибка: {e}")
 
     finally:
         if conn is not None:

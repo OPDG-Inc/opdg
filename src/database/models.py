@@ -19,5 +19,5 @@ async def create_db_connection():
         return connection, cur
 
     except SqlError as e:
-        logging.error(f"DATABASE CONNECTION: {e}")
+        logging.error(f"Ошибка при подключении к базе данных: {e}")
         return None, None

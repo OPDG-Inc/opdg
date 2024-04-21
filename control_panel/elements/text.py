@@ -47,6 +47,7 @@ labels = {
         'registration_group': "Команда",
         'registration_captain': "Капитан",
         'registration_participants': "Участники",
+        'group_info': "Обзор группы"
     },
     'buttons': {
         # actions
@@ -82,7 +83,8 @@ labels = {
         'new_topic': "Тема",
         'group': "Номер группы",
         'new_group_name': "Название команды",
-        'tid': "Telegram ID"
+        'tid': "Telegram ID",
+        'group_search': "Поиск команды"
 
     },
     'fields_hint': {
@@ -93,7 +95,8 @@ labels = {
         'new_topic': "Введите описание темы",
         'group': "5130904/20002",
         'new_group_name': "Введи название команды",
-        'tid': "4090180157"
+        'tid': "4090180157",
+        'group_search': "Введите название команды"
     },
     'snack_bars': {
         'welcome': "С возвращением!",
@@ -110,7 +113,8 @@ labels = {
         'accesscode_copied': "Код подключения скопирован",
         'topic_added': "Тема добавлена",
         'rebooting': "Перезагружаем",
-        'jury_already_exists': "Жюри с такими данными уже существует"
+        'jury_already_exists': "Жюри с такими данными уже существует",
+        'group_name_already_exists': "Название команды уже занято"
     },
     'statuses': {
         'topic_free': "Свободна",
@@ -155,5 +159,9 @@ labels = {
         'remove_participant': "Удалить участника",
         'update_data': "Обновить данные",
         'rebooting': "Перезагрузка сервиса",
+    },
+    'page_titles': {
+        'registration': "Регистрация команды",
+        'panel': "Панель управления"
     }
 }

@@ -300,8 +300,8 @@ def main(page: ft.Page):
 
     search_view = ft.ListView()
     search_bar = ft.SearchBar(
-        bar_hint_text="Поиск команды",
-        view_hint_text="Введите название команды",
+        bar_hint_text=labels['fields']['group_search'],
+        view_hint_text=labels['fields_hint']['group_search'],
         on_change=lambda _: find_group(),
         controls=[search_view],
     )
@@ -335,7 +335,7 @@ def main(page: ft.Page):
             modal=True,
             title=ft.Row(
                 [
-                    ft.Container(get_title_text("Обзор группы"), expand=True),
+                    ft.Container(get_title_text(labels['titles']['group_info']), expand=True),
                     ft.IconButton(ft.icons.CLOSE_ROUNDED, on_click=lambda _: close_dialog(group_info_dialog))
                 ]
             ),
@@ -1035,10 +1035,8 @@ def main(page: ft.Page):
             new_topic_field.value = ""
             sql_query = "SELECT COUNT(*) FROM topic"
             if make_db_request(sql_query, get_many=False):
-                access_code = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
-                config = load_config_file('config.json')
-                config['upload_topic_access_code'] = access_code
-                update_config_file(config, 'config.json')
+                accesscode = ''.join(random.choice('0123456789ABCDEF') for _ in range(15))
+                page.session.set('upload_topic_access_code', accesscode)
 
                 page.add(import_topics_col)
 
@@ -1073,8 +1071,7 @@ def main(page: ft.Page):
         open_snackbar(labels['snack_bars']['group_list_copied'])
 
     def copy_accesscode(e: ft.ControlEvent):
-        access_code = load_config_file('config.json')['upload_topic_access_code']
-        page.set_clipboard(access_code)
+        page.set_clipboard(page.session.get('upload_topic_access_code'))
         open_snackbar(labels['snack_bars']['accesscode_copied'])
 
     def get_title_text(text: str):
@@ -1175,7 +1172,7 @@ def main(page: ft.Page):
         if groups_names is not None:
             for name in groups_names:
                 if group_name_field.value.strip().lower() == name['name'].strip().lower():
-                    open_snackbar("Название команды уже занято")
+                    open_snackbar(labels['snack_bars']['group_name_already_exists'])
                     close_dialog(loading_dialog)
                     return
 
@@ -1242,7 +1239,7 @@ def main(page: ft.Page):
                     if el.label == captain_name_field.label and len(el.value.split()) < 2:
                         fl = True
                         break
-                    if el.label == captain_group_field.label and not( '/' in el.value and len(el.value.split('/')[0]) == 7 and len(el.value.split('/')[1]) >= 5):
+                    if el.label == captain_group_field.label and not ('/' in el.value and len(el.value.split('/')[0]) == 7 and len(el.value.split('/')[1]) >= 5):
                         fl = True
                         break
                     if el.value == '':
@@ -1257,7 +1254,7 @@ def main(page: ft.Page):
         page.update()
 
     def add_participant(e: ft.ControlEvent):
-        if len(parts.controls) <= 12:
+        if len(parts.controls) <= 27:
             parts.controls.append(ft.Divider())
             parts.controls.append(
                 ft.TextField(label=labels['fields']['initials'], hint_text=labels['fields_hint']['initials'], on_change=validate_group_registration_fields)
@@ -1268,7 +1265,7 @@ def main(page: ft.Page):
             btn_rem_part.disabled = False
             btn_register.disabled = True
             parts_count.value = str(len(parts.controls) // 3)
-            if len(parts.controls) == 15:
+            if len(parts.controls) == 30:
                 btn_add_part.disabled = True
         page.update()
 
@@ -1759,8 +1756,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        page.route = '/panel'
-        # page.route = f'/registration/{409801981}'
+        # page.route = '/panel'
+        page.route = f'/registration/{4324234235786}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
@@ -1768,12 +1765,12 @@ def main(page: ft.Page):
         routes = str(page.route).split("/")
         page_route = routes[1]
         if page_route == '':
-            page.title = "Панель управления"
+            page.title = labels['page_titles']['panel']
             page.scroll = None
             change_screen("login")
 
         elif page_route == 'registration' and len(routes) == 3:
-            page.title = "Регистрация"
+            page.title = labels['page_titles']['registration']
             user_id = routes[2]
             page.scroll = ft.ScrollMode.ADAPTIVE
             sql_query = "SELECT * FROM participants WHERE telegram_id = %s"
@@ -1846,7 +1843,7 @@ if __name__ == "__main__":
         ft.app(
             assets_dir='assets',
             target=main,
-            view=ft.AppView.WEB_BROWSER
+            # view=ft.AppView.WEB_BROWSER
         )
     else:
         flet_path = os.getenv("FLET_PATH", DEFAULT_FLET_PATH)

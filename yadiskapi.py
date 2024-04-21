@@ -44,10 +44,23 @@ class YandexAPI:
         response = put(url=url, headers=headers)
         return response.json()
 
+    def get_upload_link(self, filepath: str) -> {}:
+        """
+        :param filepath: путь на диске, к файлу, который будет загружен (example: video/rkf45.mp4)
+        :return:
+        """
+        url = f"{self.base_url}/resources/upload?path={filepath}"
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f"OAuth {self.token}"
+        }
+        response = get(url=url, headers=headers)
+        return response.json()
+
     def upload_file(self, filepath: str, file: str) -> {}:
         """
-        :param filepath: путь, по которму будет загружен файл
-        :param file: путь к исходному файлу
+        :param filepath: путь к файлу на локальной машине (example: C:/users/lario/desktop/rkf45)
+        :param file: ссылка, полученнная в get_upload_link
         :return:
         """
         url = f"{self.base_url}/resources/upload?path={filepath}&url={file}"

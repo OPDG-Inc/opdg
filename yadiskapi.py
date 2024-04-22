@@ -63,7 +63,8 @@ class YandexAPI:
         :param filepath: путь к файлу на локальной машине
         :return:
         """
-        put(url=url, files={'file': filepath})
+        file = open(filepath, mode='rb')
+        put(url=url, files={'file': file})
 
     def delete(self, filepath: str, permanently: bool = False) -> {}:
         """
@@ -81,5 +82,5 @@ class YandexAPI:
 
 
 # api = YandexAPI("https://cloud-api.yandex.net/v1/disk", "y0_AgAAAAAdcNW3AADLWwAAAAEBGkUkAAAnJkzf72ZFMIjCDEzgzRpDfiIqRQ")
-# link = api.get_upload_link('log11111111o_cubes.ai')['href']
-# api.upload_file(link, "C:/Users/Lario/OneDrive/Рабочий стол/logo_cubes.ai")
+# link = api.get_upload_link('test123.png')['href']
+# api.upload_file(link, "C:/Users/Lario/Downloads/gr1541_2000_1100.png")

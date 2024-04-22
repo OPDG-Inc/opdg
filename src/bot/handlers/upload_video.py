@@ -47,23 +47,24 @@ async def cmd_upload_video(message: Message, bot: Bot):
     team_name = keep_letters_and_digits(await get_team_name(message.from_user.id))
     filename = f"video_{team_name}_{timestamp}.mp4"
 
-    local_file_path = f"videos/{filename}"
+    FOLDER = "videos"
+
+    local_file_path = f"{FOLDER}/{filename}"
     print(local_file_path)
-    local_file_path_full = f"{os.getcwd()}\\videos\\{filename}"
+    local_file_path_full = f"{os.getcwd()}\\{FOLDER}\\{filename}"
     local_file_path_full = local_file_path_full.replace("\\", "/")
     print(local_file_path_full)
     await bot.download_file(file_path, local_file_path)
 
     yandex_api = await get_yandex_api_connection()
 
-    YADISK_FOLDER = "/videos"
-    # new_folder_response = yandex_api.make_dir(YADISK_FOLDER)
-    # logging.info(f"Попытка создания папки: {new_folder_response}")
-    json_link = yandex_api.get_upload_link(local_file_path)
-    final_upload_link = json_link['href']
+    new_folder_response = yandex_api.make_dir(FOLDER)
+    logging.info(f"Попытка создания папки: {new_folder_response}")
+
+    final_upload_link = yandex_api.get_upload_link(local_file_path)['href']
     print(final_upload_link)
-    upload_response = yandex_api.upload_file(local_file_path, final_upload_link)
-    logging.info(f"Попытка загрузки: {upload_response}")
+
+    yandex_api.upload_file(final_upload_link, local_file_path_full)
 
     await message.answer(
         text="✅ Ваше видео загружено и готово для оценивания жюри.",

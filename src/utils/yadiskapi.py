@@ -1,4 +1,4 @@
-from requests import get, post, put, delete
+from requests import get, put, delete
 
 
 class YandexAPI:
@@ -7,7 +7,7 @@ class YandexAPI:
         self.token = token
 
     def is_connected(self) -> {}:
-        # проверяет подключение к диску по токену
+        """ Проверяет подключение к диску по токену """
 
         url = self.base_url
         headers = {
@@ -46,7 +46,7 @@ class YandexAPI:
 
     def get_upload_link(self, filepath: str) -> {}:
         """
-        :param filepath: путь на диске, к файлу, который будет загружен (example: video/rkf45.mp4)
+        :param filepath: путь на Яндекс.диске, к файлу, который будет загружен (example: video/rkf45.mp4)
         :return:
         """
         url = f"{self.base_url}/resources/upload?path={filepath}"
@@ -57,20 +57,14 @@ class YandexAPI:
         response = get(url=url, headers=headers)
         return response.json()
 
-    def upload_file(self, filepath: str, file: str) -> {}:
+    def upload_file(self, url: str, filepath: str):
         """
-        :param filepath: путь к файлу на локальной машине (example: C:/users/lario/desktop/rkf45)
-        :param file: ссылка, полученнная в get_upload_link
+        :param url: поле href из get_upload_link
+        :param filepath: путь к файлу на локальной машине
         :return:
         """
-        url = f"{self.base_url}/resources/upload?path={filepath}&url={file}"
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': f"OAuth {self.token}"
-        }
-        response = post(url=url, headers=headers)
-        return response.json()
+        file = open(filepath, mode='rb')
+        put(url=url, files={'file': file})
 
     def delete(self, filepath: str, permanently: bool = False) -> {}:
         """
@@ -85,3 +79,9 @@ class YandexAPI:
         }
         response = delete(url=url, headers=headers)
         return response.json()
+
+
+# api = YandexAPI("https://cloud-api.yandex.net/v1/disk",
+# "y0_AgAAAAAdcNW3AADLWwAAAAEBGkUkAAAnJkzf72ZFMIjCDEzgzRpDfiIqRQ")
+# link = api.get_upload_link('test123.png')['href']
+# api.upload_file(link, "C:/Users/Lario/Downloads/gr1541_2000_1100.png")

@@ -85,3 +85,16 @@ class YandexAPI:
         }
         response = delete(url=url, headers=headers)
         return response.json()
+
+    def get_async_operation_status(self, operation_url: str):
+        """
+        :param operation_id: ссылка на асинхронную операцию
+        :return:
+        """
+        url = operation_url
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f"OAuth {self.token}"
+        }
+        response = delete(url=url, headers=headers)
+        return response.json()

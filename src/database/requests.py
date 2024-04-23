@@ -157,9 +157,9 @@ async def is_user(telegram_id):
 
 
 async def get_team_name(telegram_id):
+    group_id = await get_group_id_by_captain(telegram_id)
     conn = None
     team_name = None
-    group_id = await get_group_id_by_captain(telegram_id)
     try:
         conn, cur = await create_db_connection()
 
@@ -210,8 +210,8 @@ async def get_group_id_by_captain(telegram_id):
 
 
 async def set_video_url_and_status_to_uploaded(telegram_id, public_url):
-    conn = None
     group_id = await get_group_id_by_captain(telegram_id)
+    conn = None
     try:
         conn, cur = await create_db_connection()
         query = "UPDATE sgroups SET video_status = %s, video_link = %s WHERE group_id = %s"
@@ -223,3 +223,29 @@ async def set_video_url_and_status_to_uploaded(telegram_id, public_url):
     finally:
         if conn is not None:
             conn.close()
+
+
+async def is_video_status_uploaded(telegram_id):
+    group_id = await get_group_id_by_captain(telegram_id)
+    conn = None
+    video_status = None
+    is_uploaded = False
+    try:
+        conn, cur = await create_db_connection()
+        query = "SELECT video_status FROM sgroups WHERE group_id = %s"
+        cur.execute(query, (group_id,))
+
+        result = cur.fetchone()
+        if result:
+            video_status = result['video_status']
+
+        if video_status == 'uploaded':
+            is_uploaded = True
+
+    except Error as e:
+        logging.error(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+        return is_uploaded

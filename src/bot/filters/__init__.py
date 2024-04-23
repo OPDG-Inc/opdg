@@ -1,1 +1,1 @@
-from .filters import (IsJury, IsUser,)
+from .filters import (IsJury, IsUser, IsVideoUploaded,)

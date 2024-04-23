@@ -1,7 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 USER_MAIN_MENU_BOARD = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Проверка статуса")],
+    [KeyboardButton(text="Проверка результатов")],
     [KeyboardButton(text="Загрузка видео")],
     [KeyboardButton(text="Пользовательское соглашение")],
 ],

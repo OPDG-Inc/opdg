@@ -22,7 +22,7 @@ async def main():
 
     router_service = Router()  # все роутеры, кроме start
     router_service.include_routers(upload_video.router,
-                                   check_status.router,
+                                   check_results.router,
                                    rate_video.router,
                                    user_agreement.router)
     router_service.message.outer_middleware(SkipSideUser())

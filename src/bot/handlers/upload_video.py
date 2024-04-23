@@ -35,7 +35,7 @@ async def cmd_upload_video(message: Message):  # todo: fsm
     )
 
 
-@router.message(F.video)
+@router.message(F.video)  # todo: Фильтр на uploaded уже или нет
 async def cmd_upload_video(message: Message, bot: Bot):
     await message.answer(text="Подождите, сохраняю ваше видео...")
 

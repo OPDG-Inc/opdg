@@ -62,7 +62,7 @@ async def set_jury_status_to_registered(jury_id):
             conn.close()
 
 
-async def get_jury_name(jury_id):
+async def get_jury_full_name(jury_id):
     conn = None
     jury_name = None
     try:
@@ -159,23 +159,16 @@ async def is_user(telegram_id):
 async def get_team_name(telegram_id):
     conn = None
     team_name = None
-
+    group_id = await get_group_id_by_captain(telegram_id)
     try:
         conn, cur = await create_db_connection()
 
-        query_participant_id = "SELECT participant_id FROM participants WHERE telegram_id = %s"
-        cur.execute(query_participant_id, (telegram_id,))
-        result_participant = cur.fetchone()
+        query_team_name = "SELECT name FROM sgroups WHERE group_id = %s"
+        cur.execute(query_team_name, (group_id,))
+        result_team_name = cur.fetchone()
 
-        if result_participant:
-            participant_id = result_participant['participant_id']
-
-            query_team_name = "SELECT name FROM sgroups WHERE captain_id = %s"
-            cur.execute(query_team_name, (participant_id,))
-            result_team_name = cur.fetchone()
-
-            if result_team_name:
-                team_name = result_team_name['name']
+        if result_team_name:
+            team_name = result_team_name['name']
 
     except Error as e:
         logging.error(f"Ошибка: {e}")
@@ -184,3 +177,49 @@ async def get_team_name(telegram_id):
         if conn is not None:
             conn.close()
         return team_name
+
+
+async def get_group_id_by_captain(telegram_id):
+    conn = None
+    group_id = None
+
+    try:
+        conn, cur = await create_db_connection()
+
+        query_captain_id = "SELECT participant_id FROM participants WHERE telegram_id = %s AND status = %s"
+        cur.execute(query_captain_id, (telegram_id, 'captain',))
+        result_captain = cur.fetchone()
+
+        if result_captain:
+            captain_id = result_captain['participant_id']
+
+            query_group_id = "SELECT group_id FROM sgroups WHERE captain_id = %s"
+            cur.execute(query_group_id, (captain_id,))
+            result_group_id = cur.fetchone()
+
+            if result_group_id:
+                group_id = result_group_id['group_id']
+
+    except Error as e:
+        logging.error(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()
+        return group_id
+
+
+async def set_video_url_and_status_to_uploaded(telegram_id, public_url):
+    conn = None
+    group_id = await get_group_id_by_captain(telegram_id)
+    try:
+        conn, cur = await create_db_connection()
+        query = "UPDATE sgroups SET video_status = %s, video_link = %s WHERE group_id = %s"
+        cur.execute(query, ('uploaded', public_url, group_id,))
+
+    except Error as e:
+        logging.error(f"Ошибка: {e}")
+
+    finally:
+        if conn is not None:
+            conn.close()

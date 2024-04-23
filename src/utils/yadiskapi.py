@@ -1,4 +1,4 @@
-from requests import get, put, delete
+from requests import get, post, put, delete
 
 
 class YandexAPI:
@@ -7,22 +7,9 @@ class YandexAPI:
         self.token = token
 
     def is_connected(self) -> {}:
-        """ Проверяет подключение к диску по токену """
+        # проверяет подключение к диску по токену
 
         url = self.base_url
-        headers = {
-            'Accept': 'application/json',
-            'Authorization': f"OAuth {self.token}"
-        }
-        response = get(url=url, headers=headers)
-        return response.json()
-
-    def get_file_link(self, filepath: str) -> {}:
-        """
-        :param filepath: путь к файлу/папке
-        :return:
-        """
-        url = f"{self.base_url}/resources/download?path={filepath}"
         headers = {
             'Accept': 'application/json',
             'Authorization': f"OAuth {self.token}"
@@ -57,7 +44,7 @@ class YandexAPI:
         response = get(url=url, headers=headers)
         return response.json()
 
-    def upload_file(self, url: str, filepath: str):
+    def upload_file(self, url: str, filepath: str) -> {}:
         """
         :param url: поле href из get_upload_link
         :param filepath: путь к файлу на локальной машине
@@ -80,8 +67,19 @@ class YandexAPI:
         response = delete(url=url, headers=headers)
         return response.json()
 
+    def create_public_link(self, filepath: str):
+        headers = {
+            'Accept': 'application/json',
+            'Authorization': f"OAuth {self.token}"
+        }
+        url = f"{self.base_url}/resources/publish?path={filepath}"
+        put(url=url, headers=headers)
+        url = f"{self.base_url}/resources?path={filepath}"
+        response = get(url=url, headers=headers)
+        return response.json()
 
-# api = YandexAPI("https://cloud-api.yandex.net/v1/disk",
-# "y0_AgAAAAAdcNW3AADLWwAAAAEBGkUkAAAnJkzf72ZFMIjCDEzgzRpDfiIqRQ")
-# link = api.get_upload_link('test123.png')['href']
-# api.upload_file(link, "C:/Users/Lario/Downloads/gr1541_2000_1100.png")
+
+# api = YandexAPI("https://cloud-api.yandex.net/v1/disk", "y0_AgAAAAAdcNW3AADLWwAAAAEBGkUkAAAnJkzf72ZFMIjCDEzgzRpDfiIqRQ")
+# # link = api.get_upload_link('test123.png')['href']
+# # api.upload_file(link, "C:/Users/Lario/Downloads/gr1541_2000_1100.png")
+# print(api.create_public_link("test123.png"))

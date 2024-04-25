@@ -77,9 +77,3 @@ class YandexAPI:
         url = f"{self.base_url}/resources?path={filepath}"
         response = get(url=url, headers=headers)
         return response.json()
-
-
-# api = YandexAPI("https://cloud-api.yandex.net/v1/disk", "y0_AgAAAAAdcNW3AADLWwAAAAEBGkUkAAAnJkzf72ZFMIjCDEzgzRpDfiIqRQ")
-# # link = api.get_upload_link('test123.png')['href']
-# # api.upload_file(link, "C:/Users/Lario/Downloads/gr1541_2000_1100.png")
-# print(api.create_public_link("test123.png"))

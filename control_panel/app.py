@@ -393,6 +393,13 @@ def main(page: ft.Page):
                     sql_query = "SELECT * FROM participants WHERE group_id = %s"
                     participants_info = request_group_parts(sql_query, (group['group_id'],))
 
+                    sql_query = "SELECT SUM(creativity + technical + relevance + emotional) AS value FROM marks WHERE group_id = %s"
+                    marks_sum = make_db_request(sql_query, (group['group_id'],), get_many=False)
+                    if marks_sum['value'] is None:
+                        marks_sum = 0
+                    else:
+                        marks_sum = marks_sum['value']
+
                     group_card = ft.Card(
                         ft.Container(
                             content=ft.Column(
@@ -404,7 +411,8 @@ def main(page: ft.Page):
                                     ft.Container(
                                         ft.ListTile(
                                             title=get_title_text(labels['titles']['marks_title']),
-                                            subtitle=ft.Text(labels['elements']['no_marks_subtitle'], size=18),
+                                            # subtitle=ft.Text(labels['elements']['no_marks_subtitle'], size=18),
+                                            subtitle=ft.Text(marks_sum, size=18),
                                         ),
                                         margin=ft.margin.only(top=-20),
                                         visible=not statuses[group['video_status']]['flag']
@@ -1756,8 +1764,8 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        # page.route = '/panel'
-        page.route = f'/registration/{4324234235786}'
+        page.route = '/'
+        # page.route = f'/registration/{4324234235786}'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))

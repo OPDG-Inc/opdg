@@ -19,8 +19,8 @@ labels = {
     },
     'titles': {
         'edit_params': "Изменение параметра",
-        'marks_title': "Оценки",
-        'part_list': "Состав группы",
+        'marks_title': "Общая оценка",
+        'part_list': "Обзор группы",
         'edit_topic': "Редактирование темы",
         'participants_panel': "Список группы",
         'control_panel': 'Панель',

@@ -55,16 +55,19 @@ def create_db_connection():
 
 
 def check_systemd(service_name: str) -> bool():
-    command = ['/usr/bin/systemctl', 'status', f'{service_name}.service']
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    if process.returncode == 0:
-        text = output.decode()
-        if text[text.find('Active:') + 8:].split()[0] == 'active':
-            return True
-        return False
+    if platform.system() == "Windows":
+        return True
     else:
-        return False
+        command = ['/usr/bin/systemctl', 'status', f'{service_name}.service']
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
+        if process.returncode == 0:
+            text = output.decode()
+            if text[text.find('Active:') + 8:].split()[0] == 'active':
+                return True
+            return False
+        else:
+            return False
 
 
 def main(page: ft.Page):
@@ -83,8 +86,9 @@ def main(page: ft.Page):
     }
     settings_subtitle_weight = ft.FontWeight.W_400
 
-    page.window_width = 377
-    page.window_height = 768
+    if platform.system() == "Windows":
+        page.window_width = 377
+        page.window_height = 768
 
     cache_ttl = 180
     cache_topics = TTLCache(maxsize=1000, ttl=cache_ttl)
@@ -445,7 +449,7 @@ def main(page: ft.Page):
                             padding=15
                         ),
                         col={"lg": 1},
-                        elevation=10,
+                        elevation=5,
                         data=group['group_id']
                     )
                     rr.controls.append(group_card)
@@ -557,7 +561,7 @@ def main(page: ft.Page):
                     #         ),
                     #         padding=15
                     #     ),
-                    #     elevation=10,
+                    #     elevation=5,
                     #     col={"lg": 1},
                     #     data=topic['topic_id']
                     # )
@@ -626,7 +630,7 @@ def main(page: ft.Page):
                             ),
                             padding=15
                         ),
-                        elevation=10,
+                        elevation=5,
                         col={"lg": 1},
                         data=jury['jury_id']
                     )
@@ -843,8 +847,8 @@ def main(page: ft.Page):
             ),
             subtitle=ft.Row(
                 [
-                    descr,
-                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=reboot_service, visible=False, tooltip=labels['tooltips']['rebooting'], data=btn_data)
+                    ft.Container(descr, expand=True),
+                    ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=reboot_service, visible=True, tooltip=labels['tooltips']['rebooting'], data=btn_data)
                 ]
             ),
         )
@@ -1085,7 +1089,7 @@ def main(page: ft.Page):
     def get_title_text(text: str):
         return ft.Text(text,
                        size=20,
-                       weight=ft.FontWeight.W_700,
+                       weight=ft.FontWeight.W_400,
                        text_align=ft.TextAlign.START)
 
     def login():
@@ -1567,7 +1571,7 @@ def main(page: ft.Page):
             ),
             padding=15
         ),
-        elevation=10
+        elevation=5
     )
 
     app_info_elements = {
@@ -1587,7 +1591,7 @@ def main(page: ft.Page):
                             ft.Container(
                                 ft.Row(
                                     [
-                                        ft.Container(get_title_text(labels['titles']['statistics']), expand=True, margin=ft.margin.only(left=15)),
+                                        ft.Container(get_title_text(labels['titles']['statistics']), expand=True),
                                         ft.IconButton(ft.icons.RESTART_ALT_ROUNDED, on_click=lambda _: goto_stats(), tooltip=labels['tooltips']['update_data'])
                                     ]
                                 ),
@@ -1600,7 +1604,7 @@ def main(page: ft.Page):
                     ),
                     padding=15
                 ),
-                elevation=10,
+                elevation=5,
                 width=450,
                 col={"lg": 1}
             ),
@@ -1608,7 +1612,7 @@ def main(page: ft.Page):
                 ft.Container(
                     content=ft.Column(
                         [
-                            ft.Container(get_title_text(labels['titles']['removing_data']), margin=ft.margin.only(bottom=10, left=15)),
+                            ft.Container(get_title_text(labels['titles']['removing_data'])),
                             settings_tile(
                                 title=labels['titles']['topics'],
                                 descr=labels['simple_text']['rem_topics_descr'],
@@ -1637,7 +1641,7 @@ def main(page: ft.Page):
                     ),
                     padding=15
                 ),
-                elevation=10,
+                elevation=5,
                 width=450,
                 col={"lg": 1}
             ),
@@ -1646,7 +1650,7 @@ def main(page: ft.Page):
                 ft.Container(
                     content=ft.Column(
                         [
-                            ft.Container(get_title_text(labels['titles']['auth']), margin=ft.margin.only(bottom=20, left=15)),
+                            ft.Container(get_title_text(labels['titles']['auth'])),
                             settings_tile(
                                 title=labels['statuses']['oauth_token'],
                                 descr=labels['simple_text']['oauth_token_descr'],
@@ -1675,7 +1679,7 @@ def main(page: ft.Page):
                     ),
                     padding=15
                 ),
-                elevation=10,
+                elevation=5,
                 width=450,
                 col={"lg": 1}
             ),
@@ -1701,7 +1705,7 @@ def main(page: ft.Page):
                     ),
                     padding=15
                 ),
-                elevation=10,
+                elevation=5,
                 width=450,
                 col={"lg": 1}
             )
@@ -1730,7 +1734,7 @@ def main(page: ft.Page):
                         ),
                         padding=15
                     ),
-                    elevation=10
+                    elevation=5
                 ),
                 ft.Card(
                     ft.Container(
@@ -1754,7 +1758,7 @@ def main(page: ft.Page):
                         ),
                         padding=15
                     ),
-                    elevation=10
+                    elevation=5
                 )
             ],
             width=800,
@@ -1764,8 +1768,9 @@ def main(page: ft.Page):
     )
 
     if platform.system() == "Windows":
-        page.route = '/'
+        # page.route = '/'
         # page.route = f'/registration/{4324234235786}'
+        page.route = f'/ratevideo/409801981/1'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
@@ -1776,6 +1781,18 @@ def main(page: ft.Page):
             page.title = labels['page_titles']['panel']
             page.scroll = None
             change_screen("login")
+
+        elif page_route == "ratevideo":
+            jury_id = routes[2]
+            group_id = routes[3]
+            page.add(
+                ft.Column(
+                    [
+                        ft.Text(f"Страница оценки видео группы id #{group_id} для жюри id #{jury_id} ", size=18)
+                    ]
+                )
+            )
+            open_snackbar(f"{page_route}")
 
         elif page_route == 'registration' and len(routes) == 3:
             page.title = labels['page_titles']['registration']
@@ -1798,7 +1815,7 @@ def main(page: ft.Page):
                                 ),
                                 padding=15
                             ),
-                            elevation=10
+                            elevation=5
                         ),
                         ft.Card(
                             ft.Container(
@@ -1812,7 +1829,7 @@ def main(page: ft.Page):
                                 ),
                                 padding=15
                             ),
-                            elevation=10
+                            elevation=5
                         ),
                         ft.Card(
                             ft.Container(
@@ -1833,7 +1850,7 @@ def main(page: ft.Page):
                                 ),
                                 padding=15
                             ),
-                            elevation=10
+                            elevation=5
                         ),
                         ft.Row([btn_register], alignment=ft.MainAxisAlignment.CENTER)
                     ]

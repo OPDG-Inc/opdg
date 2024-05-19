@@ -3,8 +3,8 @@ from flet import icons
 screens = {
     "main": {
         "title": "Главная",
-        "lead_icon": icons.LOGOUT_ROUNDED,
-        "target": "login"
+        "lead_icon": None,
+        "target": ""
 
     },
     "login": {

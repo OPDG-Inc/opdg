@@ -1,11 +1,11 @@
 <!-- Тот кто это читает, найдя этот файл в интернете, это нужная инфа, без нее жить не можем.
-        
-        put this file in /var/www/html 
-        
+
+        put this file in /var/www/html
+
         nginx:
         location /webapp {
                 root /var/www/html;
-                
+
                 try_files /webapp.html =404;
         }
 
@@ -69,13 +69,14 @@
 
             } else {
                 webApp.expand();
-                if (webApp.initDataUnsafe.start_param === "registration") {
+                if (webApp.initDataUnsafe.start_param.startsWith("rate")) {
+                    let videoId = webApp.initDataUnsafe.start_param.substring(4);
+                    let telegramId = webApp.initDataUnsafe.user.id;
+                    let url = "https://opgd.ddns.net/ratevideo/" + telegramId + "/" + videoId;
+                    window.location.href = url;
+                } else if (webApp.initDataUnsafe.start_param === "registration") {
                     let telegramId = webApp.initDataUnsafe.user.id;
                     let url = "https://opgd.ddns.net/registration/" + telegramId;
-                    window.location.href = url;
-                } else if (webApp.initDataUnsafe.start_param === "ratevideo") {
-                    let telegramId = webApp.initDataUnsafe.user.id;
-                    let url = "https://opgd.ddns.net/ratevideo/" + telegramId + "/" + webApp.initDataUnsafe + ":::" + webApp.initData;
                     window.location.href = url;
                 } else {
                     let mainBlock = document.getElementById("main-block");

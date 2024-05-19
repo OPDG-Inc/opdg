@@ -68,25 +68,14 @@
                     "</html>\n";
 
             } else {
+                webApp.expand();
                 if (webApp.initDataUnsafe.start_param === "registration") {
                     let telegramId = webApp.initDataUnsafe.user.id;
                     let url = "https://opgd.ddns.net/registration/" + telegramId;
                     window.location.href = url;
                 } else if (webApp.initDataUnsafe.start_param === "ratevideo") {
-                    function getQueryParams(url) {
-                        let params = {};
-                        url.substring(url.indexOf('?') + 1).split('&').forEach(function (part) {
-                            let item = part.split('=');
-                            params[item[0]] = decodeURIComponent(item[1]);
-                        });
-                        return params;
-                    }
-
-                    let currentUrl = new URL(window.location.href);
-                    let params = getQueryParams(currentUrl.toString());
-                    let groupId = params['id'];
                     let telegramId = webApp.initDataUnsafe.user.id;
-                    let url = "https://opgd.ddns.net/ratevideo/" + telegramId + "/" + groupId;
+                    let url = "https://opgd.ddns.net/ratevideo/" + telegramId + "/" + webApp.initDataUnsafe + ":::" + webApp.initData;
                     window.location.href = url;
                 } else {
                     let mainBlock = document.getElementById("main-block");

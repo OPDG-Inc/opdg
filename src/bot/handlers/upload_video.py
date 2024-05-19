@@ -9,7 +9,7 @@ from aiogram.types import Message
 
 from src.bot.filters import IsUser, IsVideoUploaded
 from src.utils import keep_letters_and_digits
-from src.database.requests import get_team_name, set_video_url_and_status_to_uploaded
+from src.database.requests import get_team_name_by_captain, set_video_url_and_status_to_uploaded
 from src.utils import YandexAPI
 from src.bot.structures.keyboards import TO_MENU, USER_MAIN_MENU_BOARD
 
@@ -44,7 +44,7 @@ async def cmd_upload_video(message: Message, bot: Bot):
     file_path = file.file_path
 
     timestamp = int(time.time())
-    team_name = keep_letters_and_digits(await get_team_name(message.from_user.id))
+    team_name = keep_letters_and_digits(await get_team_name_by_captain(message.from_user.id))
     filename = f"video_{team_name}_{timestamp}.mp4"
 
     FOLDER = "videos"

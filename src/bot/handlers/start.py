@@ -7,7 +7,7 @@ from src.bot.filters import IsUser, IsJury
 from src.bot.structures.lexicon import (user_agreement_text, text_after_disagreement, just_sent_web_app,
                                         user_already_registered, jury_already_registered, user_reg_but_jury,)
 from src.bot.structures.keyboards import (AGREEMENT, SIGN_UP_A_TEAM, USER_MAIN_MENU_BOARD, JURY_MAIN_MENU_BOARD,)
-from src.database.requests import (get_jury_by_link_code, get_jury_status, set_jury_status_to_registered,
+from src.database.requests import (get_jury_id_by_link_code, get_jury_id_status, set_jury_status_to_registered,
                                    get_jury_full_name, is_jury_correlate_with_code, )
 
 
@@ -21,7 +21,7 @@ async def cmd_start_jury_link(message: Message, command: CommandObject):
     jury_id = None
 
     if link_type == 'jury' and code is not None:
-        jury_id = await get_jury_by_link_code(code)
+        jury_id = await get_jury_id_by_link_code(code)
 
     if jury_id is None:
         await message.answer(
@@ -29,7 +29,7 @@ async def cmd_start_jury_link(message: Message, command: CommandObject):
             reply_markup=ReplyKeyboardRemove()
         )
 
-    jury_status = await get_jury_status(jury_id)
+    jury_status = await get_jury_id_status(jury_id)
     if jury_status not in ('waiting', 'registered',):
         print("Ошибка в базе данных: в колонке status неизвестных статус")
         return

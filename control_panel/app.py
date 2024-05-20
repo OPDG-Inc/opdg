@@ -1885,6 +1885,8 @@ def main(page: ft.Page):
             jury_id = routes[2]
             group_id = routes[3]
 
+            page.scroll = ft.ScrollMode.HIDDEN
+
             page.session.set('group_id_rate', group_id)
             page.session.set('jury_id_rate', jury_id)
 
@@ -1914,7 +1916,7 @@ def main(page: ft.Page):
         elif page_route == 'registration' and len(routes) == 3:
             page.title = labels['page_titles']['registration']
             user_id = routes[2]
-            page.scroll = ft.ScrollMode.ADAPTIVE
+            page.scroll = ft.ScrollMode.HIDDEN
             sql_query = "SELECT * FROM participants WHERE telegram_id = %s"
             user = make_db_request(sql_query, (user_id,), get_many=True)
             if user is not None:

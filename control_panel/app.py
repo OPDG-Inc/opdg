@@ -1340,6 +1340,21 @@ def main(page: ft.Page):
         )
     )
 
+    rate_send_text = ft.Text(size=18, text_align=ft.TextAlign.CENTER)
+    rate_send_dialog = ft.AlertDialog(
+        modal=True,
+        title=get_title_text("Оценка видео"),
+        content=ft.Column(
+            [
+                rate_send_text
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            height=100,
+            width=600
+        )
+    )
+
     participants_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Row(
@@ -1467,18 +1482,20 @@ def main(page: ft.Page):
 
     )
 
+    loading_text = ft.Text("Загрузка", size=20, weight=ft.FontWeight.W_400)
     loading_dialog = ft.AlertDialog(
+        # Диалог с кольцом загрузки
+
+        # title=ft.Text(size=20),
         modal=True,
-        title=ft.Text(),
         content=ft.Column(
-            width=100,
-            height=100,
+            controls=[
+                ft.Column([loading_text, ft.ProgressBar()], alignment=ft.MainAxisAlignment.CENTER),
+            ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.ProgressRing(),
-                ft.Container(ft.Text(labels['elements']['loading'], size=20, weight=ft.FontWeight.W_500), margin=ft.margin.only())
-            ]
+            width=400,
+            height=50
         )
     )
 
@@ -1767,10 +1784,92 @@ def main(page: ft.Page):
         )
     )
 
+    def send_rate(e: ft.ControlEvent):
+        loading_text.value = "Отправка"
+        open_dialog(loading_dialog)
+        query = "SELECT * FROM jury WHERE telegram_id = %s"
+        jury_info = make_db_request(query, (page.session.get('jury_id_rate'),), get_many=False)
+        query = "INSERT INTO marks (jury_id, group_id, creativity, technical, relevance, emotional) VALUES (%s, %s, %s, %s, %s, %s)"
+        params = (jury_info['jury_id'], page.session.get('group_id_rate'), marks_dict['creativity'], marks_dict['technical'], marks_dict['relevance'], marks_dict['emotional'],)
+
+        if make_db_request(query, params, put_many=False) is not None:
+            rate_send_text.value = "Ваши оценки отправлены, спасибо!"
+        else:
+            rate_send_text.value = "Произошла ошибка при отправке оценок, пожалуйста, закройте эту страницу и заново нажмите на кнопку «Оценить видео» под сообщением"
+
+        send_rate_btn.disabled = True
+        time.sleep(2)
+        close_dialog(loading_dialog)
+        open_dialog(rate_send_dialog)
+
+    send_rate_btn = ft.FilledTonalButton(
+        text="Отправить",
+        icon=ft.icons.SEND,
+        on_click=send_rate,
+        disabled=True
+    )
+
+    marks_dict = {}
+
+    def set_temp_mark(e):
+        data = e.data[2:-2].split("_")
+        marks_dict[data[0]] = data[1]
+
+        if len(marks_dict.keys()) == 4:
+            send_rate_btn.disabled = False
+        else:
+            send_rate_btn.disabled = True
+
+        page.update()
+
+    def get_rate_card(title: str, index: str):
+        card = ft.Card(
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Text(title, size=18),
+                        ft.SegmentedButton(
+                            on_change=set_temp_mark,
+                            selected_icon=ft.Icon(ft.icons.CIRCLE, color=ft.colors.GREEN),
+                            allow_empty_selection=True,
+                            allow_multiple_selection=False,
+                            segments=[
+                                ft.Segment(
+                                    value=f"{index}_1",
+                                    label=ft.Text("1"),
+                                ),
+                                ft.Segment(
+                                    value=f"{index}_2",
+                                    label=ft.Text("2"),
+                                ),
+                                ft.Segment(
+                                    value=f"{index}_3",
+                                    label=ft.Text("3"),
+                                ),
+                                ft.Segment(
+                                    value=f"{index}_4",
+                                    label=ft.Text("4"),
+                                ),
+                                ft.Segment(
+                                    value=f"{index}_5",
+                                    label=ft.Text("5"),
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                padding=15
+            ),
+            elevation=5,
+            width=600
+        )
+
+        return card
+
     if platform.system() == "Windows":
         # page.route = '/'
         # page.route = f'/registration/{4324234235786}'
-        page.route = f'/ratevideo/409801981/1'
+        page.route = f'/ratevideo/588535049/1'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
@@ -1785,14 +1884,32 @@ def main(page: ft.Page):
         elif page_route == "ratevideo":
             jury_id = routes[2]
             group_id = routes[3]
-            page.add(
-                ft.Column(
-                    [
-                        ft.Text(f"Страница оценки видео группы id #{group_id} для жюри id #{jury_id} ", size=18)
-                    ]
-                )
-            )
-            open_snackbar(f"{page_route}")
+
+            page.session.set('group_id_rate', group_id)
+            page.session.set('jury_id_rate', jury_id)
+
+            query = "SELECT * FROM sgroups WHERE group_id = %s"
+            group_info = make_db_request(query, (group_id,), get_many=False)
+
+            page.controls = [
+                ft.Card(
+                    ft.Container(
+                        ft.Column(
+                            [
+                                ft.Text(f"Оценка видео группы «{group_info['name']}»", size=20, weight=ft.FontWeight.W_400)
+                            ]
+                        ),
+                        padding=15
+                    ),
+                    width=600,
+                    elevation=5
+                ),
+                get_rate_card(title="Креативность и оригинальность идеи", index="creativity"),
+                get_rate_card(title="Техническое исполнение", index="technical"),
+                get_rate_card(title="Соответствие теме и целям конкурса", index="relevance"),
+                get_rate_card(title="Эмоциональное воздействие", index="emotional"),
+                ft.Row([send_rate_btn], alignment=ft.MainAxisAlignment.END, width=600)
+            ]
 
         elif page_route == 'registration' and len(routes) == 3:
             page.title = labels['page_titles']['registration']

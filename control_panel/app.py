@@ -379,7 +379,7 @@ def main(page: ft.Page):
         )
         page.add(rr)
         page.update()
-        rr.controls.append(search_bar)
+        # rr.controls.append(search_bar)
 
         sql_query = "SELECT * FROM sgroups"
         if force_update:
@@ -1787,10 +1787,8 @@ def main(page: ft.Page):
     def send_rate(e: ft.ControlEvent):
         loading_text.value = "Отправка"
         open_dialog(loading_dialog)
-        query = "SELECT * FROM jury WHERE telegram_id = %s"
-        jury_info = make_db_request(query, (page.session.get('jury_id_rate'),), get_many=False)
         query = "INSERT INTO marks (jury_id, group_id, creativity, technical, relevance, emotional) VALUES (%s, %s, %s, %s, %s, %s)"
-        params = (jury_info['jury_id'], page.session.get('group_id_rate'), marks_dict['creativity'], marks_dict['technical'], marks_dict['relevance'], marks_dict['emotional'],)
+        params = (page.session.get('jury_id_rate'), page.session.get('group_id_rate'), marks_dict['creativity'], marks_dict['technical'], marks_dict['relevance'], marks_dict['emotional'],)
 
         if make_db_request(query, params, put_many=False) is not None:
             rate_send_text.value = "Ваши оценки отправлены, спасибо!"
@@ -1867,9 +1865,9 @@ def main(page: ft.Page):
         return card
 
     if platform.system() == "Windows":
-        # page.route = '/'
+        page.route = '/'
         # page.route = f'/registration/{4324234235786}'
-        page.route = f'/ratevideo/588535049/1'
+        # page.route = f'/ratevideo/588535049/1'
 
     if elements.global_vars.DB_FAIL:
         show_error('db', labels['errors']['db_connection'].format(elements.global_vars.ERROR_TEXT.split(":")[0]))
@@ -1884,34 +1882,43 @@ def main(page: ft.Page):
         elif page_route == "ratevideo":
             jury_id = routes[2]
             group_id = routes[3]
-
             page.scroll = ft.ScrollMode.HIDDEN
 
             page.session.set('group_id_rate', group_id)
-            page.session.set('jury_id_rate', jury_id)
 
             query = "SELECT * FROM sgroups WHERE group_id = %s"
             group_info = make_db_request(query, (group_id,), get_many=False)
 
-            page.controls = [
-                ft.Card(
-                    ft.Container(
-                        ft.Column(
-                            [
-                                ft.Text(f"Оценка видео группы «{group_info['name']}»", size=20, weight=ft.FontWeight.W_400)
-                            ]
+            query = "SELECT * FROM jury WHERE telegram_id = %s"
+            jury_info = make_db_request(query, (jury_id,), get_many=False)
+            page.session.set('jury_id_rate', jury_info['jury_id'])
+
+            query = "SELECT * FROM marks WHERE group_id = %s AND jury_id = %s"
+            is_exist = make_db_request(query, (group_id, jury_info['jury_id'],), get_many=True)
+            print(is_exist)
+            if len(is_exist) != 0:
+                rate_send_text.value = f"Вы уже оценили видео группы «{group_info['name']}»"
+                open_dialog(rate_send_dialog)
+            else:
+                page.controls = [
+                    ft.Card(
+                        ft.Container(
+                            ft.Column(
+                                [
+                                    ft.Text(f"Оценка видео группы «{group_info['name']}»", size=20, weight=ft.FontWeight.W_400)
+                                ]
+                            ),
+                            padding=15
                         ),
-                        padding=15
+                        width=600,
+                        elevation=5
                     ),
-                    width=600,
-                    elevation=5
-                ),
-                get_rate_card(title="Креативность и оригинальность идеи", index="creativity"),
-                get_rate_card(title="Техническое исполнение", index="technical"),
-                get_rate_card(title="Соответствие теме и целям конкурса", index="relevance"),
-                get_rate_card(title="Эмоциональное воздействие", index="emotional"),
-                ft.Row([send_rate_btn], alignment=ft.MainAxisAlignment.END, width=600)
-            ]
+                    get_rate_card(title="Креативность и оригинальность идеи", index="creativity"),
+                    get_rate_card(title="Техническое исполнение", index="technical"),
+                    get_rate_card(title="Соответствие теме и целям конкурса", index="relevance"),
+                    get_rate_card(title="Эмоциональное воздействие", index="emotional"),
+                    ft.Row([send_rate_btn], alignment=ft.MainAxisAlignment.END, width=600)
+                ]
 
         elif page_route == 'registration' and len(routes) == 3:
             page.title = labels['page_titles']['registration']

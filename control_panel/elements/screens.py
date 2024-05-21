@@ -4,11 +4,11 @@ screens = {
     "main": {
         "title": "Главная",
         "lead_icon": None,
-        "target": ""
+        "target": "main"
 
     },
     "login": {
-        "title": "Авторизация",
+        'title': "Панель управления ботом «ВШПМ: Голосование»",
         "lead_icon": None,
         "target": ""
     },

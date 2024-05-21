@@ -348,7 +348,6 @@ def main(page: ft.Page):
         open_dialog(group_info_dialog)
 
     def find_group():
-        print(search_bar.value)
         search_view.controls.clear()
         sql_query = "SELECT * FROM sgroups"
         groups_list = request_groups(sql_query)
@@ -747,11 +746,13 @@ def main(page: ft.Page):
             current_tab_index = page.navigation_bar.selected_index
             page.controls.clear()
             page.appbar.actions.clear()
-
-            appbar.leading = ft.IconButton(
-                icon=screens['main']['lead_icon'],
-                on_click=lambda _: change_screen(screens['main']['target'])
-            )
+            if screens['main']['lead_icon'] is not None:
+                appbar.leading = ft.IconButton(
+                    icon=screens['main']['lead_icon'],
+                    on_click=lambda _: change_screen(screens['main']['target'])
+                )
+            else:
+                appbar.leading = None
             tab = tabs_config[tab_index]
             appbar.title.value = tab['title']
             page.scroll = tab['scroll']
@@ -1017,13 +1018,16 @@ def main(page: ft.Page):
 
         if target in screens.keys():
             appbar.title.value = screens[target]['title']
-            appbar.leading = ft.IconButton(
-                icon=screens[target]['lead_icon'],
-                on_click=lambda _: change_screen(screens[target]['target'])
-            )
+            if screens[target]['lead_icon'] is not None:
+                appbar.leading = ft.IconButton(
+                    icon=screens[target]['lead_icon'],
+                    on_click=lambda _: change_screen(screens[target]['target'])
+                )
+            else:
+                appbar.leading = None
         if target == "login":
             page.scroll = None
-            page.appbar = None
+            # page.appbar = appbar
             page.add(ft.Container(login_col, expand=True), )
 
         elif target == "main":
@@ -1062,7 +1066,7 @@ def main(page: ft.Page):
         page.update()
 
     appbar = ft.AppBar(
-        title=ft.Text(),
+        title=ft.Text(weight=ft.FontWeight.W_400, size=20),
         bgcolor=ft.colors.SURFACE_VARIANT
     )
 
@@ -1521,21 +1525,13 @@ def main(page: ft.Page):
 
     login_col = ft.Column(
         controls=[
-            # ft.Container(
-            #     ft.Lottie(
-            #         src='https://lottie.host/bbf984e1-7cba-417a-8a6f-472105c726b0/joNPBJ5N73.json',
-            #         # on_error=lambda _: open_snackbar("3453454")
-            #         background_loading=True,
-            #         scale=0.2
-            #     ),
-            #     margin=ft.margin.all(-460)
-            # ),
             ft.Container(ft.Image(src="logo.png",
                                   fit=ft.ImageFit.CONTAIN,
                                   height=200,
                                   error_content=ft.ProgressRing()
                                   ),
                          ),
+            ft.Text("Панель управления ботом «ВШПМ: Голосование»", size=16, width=250, text_align=ft.TextAlign.CENTER),
             password_field,
             button_login
         ],
@@ -1895,7 +1891,6 @@ def main(page: ft.Page):
 
             query = "SELECT * FROM marks WHERE group_id = %s AND jury_id = %s"
             is_exist = make_db_request(query, (group_id, jury_info['jury_id'],), get_many=True)
-            print(is_exist)
             if len(is_exist) != 0:
                 rate_send_text.value = f"Вы уже оценили видео группы «{group_info['name']}»"
                 open_dialog(rate_send_dialog)
